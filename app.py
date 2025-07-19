@@ -16,7 +16,11 @@ data = {
     "password": password,
 }
 
-epp_client.login(**data)
+response = epp_client.login(**data)
+
+if '<result code="1000">' not in response:
+    print("Could not login")
+    exit()
 
 def unlog_and_exit():
     epp_client.logout()
