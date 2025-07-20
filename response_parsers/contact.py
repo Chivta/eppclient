@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 
-# parsers that are used only for printing in console
+# response_parsers that are used only for printing in console
 
 def parse_host_create_response(xml_string):
     ns = {'epp': 'urn:ietf:params:xml:ns:epp-1.0'}

@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 
-# parsers that are used only for printing in console
+# response_parsers that are used only for printing in console
 
 def parse_domain_info(xml_string):
     ns = {

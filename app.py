@@ -1,7 +1,7 @@
 from config import *
-from domain_response_parsers import *
-from host_response_parsers import *
-from contact_response_parser import *
+from response_parsers.domain import *
+from response_parsers.host import *
+from response_parsers.contact import *
 from EPPServerConnection import EPPServerConnection
 from EPPClient import EPPClient
 
