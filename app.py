@@ -51,12 +51,11 @@ def domain_menu():
         action = domain_menu_actions.get(choice)
         if action:
             action()
-        elif choice == "4":
+        elif choice == "5":
             return
         else:
-            print("Invalid choice.\n")
+            print("Invalid choice.")
         print()
-
 
 def domain_create():
     print("=== Creating a domain ===")
@@ -185,12 +184,12 @@ host_menu_actions = {
 
 def contact_menu():
     while True:
-        print("1. Contact info\n2. Contact create\n3. Back")
+        print("1. Contact info\n2. Contact create\n3. Contact delete\n4. Exit")
         choice = input("Choose an option: ").strip()
         action = contact_menu_actions.get(choice)
         if action:
             action()
-        elif choice == "3":
+        elif choice == "4":
             return
         else:
             print("Invalid choice.\n")
@@ -217,9 +216,18 @@ def contact_create():
     response = epp_client.contact_create(contact_id, name, city, country_code, email, _password)
     parse_host_create_response(response)
 
+def contact_delete():
+    print("=== Contact delete ===")
+    contact_id = input("Enter contact id: ")
+
+    response = epp_client.contact_delete(contact_id)
+
+    parse_contact_delete(response)
+
 contact_menu_actions = {
     "1": contact_info,
-    "2": contact_create
+    "2": contact_create,
+    "3": contact_delete
 }
 
 

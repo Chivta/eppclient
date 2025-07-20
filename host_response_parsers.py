@@ -10,14 +10,17 @@ def parse_host_check_response(xml_string):
         'host': 'http://hostmaster.ua/epp/host-1.1'
     }
 
-    for cd in root.findall('.//host:cd', ns):
+    cds = root.findall('.//host:cd', ns)
+    if cds:
+        print("[*] Host check results:")
+    for cd in cds:
         name_el = cd.find('host:name', ns)
         name = name_el.text
         avail = name_el.attrib.get('avail')
-        print(f"{name} - {'available' if avail == '1' else 'unavailable'}")
+        print(f"  [+] {name} - {'available' if avail == '1' else 'unavailable'}")
         reason_el = cd.find('host:reason', ns)
         if reason_el is not None:
-            print(f"  Reason: {reason_el.text}")
+            print(f"      [+] Reason: {reason_el.text}")
 
 def parse_host_create_response(xml_string):
     root = ET.fromstring(xml_string)
@@ -27,11 +30,11 @@ def parse_host_create_response(xml_string):
     if result is not None:
         code = result.get("code")
         msg = result.find("epp:msg", ns)
+        print("[+] Host create result:")
+        print(f"  [+] Status code: {code}")
         if msg is not None:
-            print(f"Status code: {code}")
-            print(f"Message: {msg.text}")
+            print(f"  [+] Message: {msg.text}")
         else:
-            print(f"Status code: {code}")
-            print("No message found.")
+            print("  [+] No message found.")
     else:
-        print("No <result> found in the response.")
+        print("[+] No <result> found in the response.")

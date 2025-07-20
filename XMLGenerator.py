@@ -178,3 +178,17 @@ def domain_delete(domain:str)->bytes:
     </command>
   </epp>
     '''.encode("utf-8")
+
+
+def contact_delete(contact_id:str)->bytes:
+    return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+    <command>
+      <delete>
+        <contact:delete xmlns:contact="http://hostmaster.ua/epp/contact-1.1">
+          <contact:id>{contact_id}</contact:id>
+        </contact:delete>
+      </delete>
+    </command>
+  </epp>
+'''.encode("utf-8")

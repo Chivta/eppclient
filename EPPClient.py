@@ -75,3 +75,10 @@ class EPPClient:
         self.connection.send_xml(contact_create_xml)
 
         return self._get_response()
+
+    def contact_delete(self,contact_id):
+        contact_delete_xml = XMLGenerator.contact_delete(contact_id)
+
+        self.connection.send_xml(contact_delete_xml)
+
+        return self._get_response()
