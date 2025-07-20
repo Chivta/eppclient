@@ -44,6 +44,12 @@ class EPPClient:
 
         return self._get_response()
 
+    def domain_delete(self,domain:str):
+        domain_delete_xml = XMLGenerator.domain_delete(domain)
+        self.connection.send_xml(domain_delete_xml)
+        return self._get_response()
+
+
     def host_check(self, hosts):
         host_check_xml = XMLGenerator.host_check(hosts)
         self.connection.send_xml(host_check_xml)

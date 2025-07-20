@@ -14,13 +14,14 @@ def parse_domain_info(xml_string):
     if result is not None:
         code = result.attrib.get('code')
         message = result.findtext('epp:msg', default='No message', namespaces=ns)
+        print(f"[+] Response code: {code}")
+        print(f"[+] Message: {message}")
         if code != '1000':
-            print("Error code:", code)
-            print("Message:", message)
+            print("[!] Error occurred, skipping detailed info.")
             return
 
     for inf_data in root.findall('.//domain:infData', ns):
-        print("Domain Information:")
+        print("[*] Domain Information:")
         print("  Name:", inf_data.findtext('domain:name', default='N/A', namespaces=ns))
         print("  ROID:", inf_data.findtext('domain:roid', default='N/A', namespaces=ns))
 
@@ -55,10 +56,11 @@ def parse_domain_check_response(xml_string):
     }
 
     root = ET.fromstring(xml_string)
-    result_code = root.find('.//epp:result', ns).attrib['code']
-    message = root.find('.//epp:msg', ns).text
-    print(f"Result Code: {result_code}")
-    print(f"Message: {message}\n")
+    result = root.find('.//epp:result', ns)
+    code = result.attrib.get('code')
+    message = result.findtext('epp:msg', default='No message', namespaces=ns)
+    print(f"[+] Response code: {code}")
+    print(f"[+] Message: {message}\n")
 
     for cd in root.findall('.//domain:cd', ns):
         name_elem = cd.find('domain:name', ns)
@@ -66,9 +68,8 @@ def parse_domain_check_response(xml_string):
         avail = name_elem.attrib['avail']
         reason_elem = cd.find('domain:reason', ns)
         reason = reason_elem.text if reason_elem is not None else "Available"
-
         status = "Available" if avail == "1" else "Not Available"
-        print(f"{name}: {status} ({reason})")
+        print(f"[*] {name}: {status} ({reason})")
 
 def parse_domain_create_response(xml_string):
     ns = {
@@ -78,32 +79,52 @@ def parse_domain_create_response(xml_string):
 
     root = ET.fromstring(xml_string)
     result_elem = root.find('.//epp:result', ns)
-    result_code = result_elem.attrib.get('code')
-    message = result_elem.find('epp:msg', ns).text
-    print(f"Result Code: {result_code}")
-    print(f"Message: {message}\n")
+    code = result_elem.attrib.get('code')
+    message = result_elem.findtext('epp:msg', default='No message', namespaces=ns)
 
-    if result_code == "1000":
-        # Success case
+    print(f"[+] Response code: {code}")
+    print(f"[+] Message: {message}\n")
+
+    if code == "1000":
         cre_data = root.find('.//domain:creData', ns)
         if cre_data is not None:
-            name = cre_data.find('domain:name', ns).text
-            cr_date = cre_data.find('domain:crDate', ns).text
-            ex_date = cre_data.find('domain:exDate', ns).text
-            print(f"Domain Created: {name}")
-            print(f"Created At: {cr_date}")
-            print(f"Expires At: {ex_date}")
+            name = cre_data.findtext('domain:name', default='N/A', namespaces=ns)
+            cr_date = cre_data.findtext('domain:crDate', default='N/A', namespaces=ns)
+            ex_date = cre_data.findtext('domain:exDate', default='N/A', namespaces=ns)
+            print(f"[*] Domain Created: {name}")
+            print(f"[*] Created At: {cr_date}")
+            print(f"[*] Expires At: {ex_date}")
         else:
-            print("No <domain:creData> found in successful response.")
+            print("[!] No <domain:creData> found in successful response.")
     else:
-        # Error case
         ext_value = root.find('.//epp:extValue', ns)
         if ext_value is not None:
             value_elem = ext_value.find('.//domain:hostObj', ns)
             reason_elem = ext_value.find('epp:reason', ns)
             value = value_elem.text.strip() if value_elem is not None else "?"
             reason = reason_elem.text if reason_elem is not None else "Unknown reason"
-            print(f"Error Element: {value}")
-            print(f"Reason: {reason}")
+            print(f"[!] Error Element: {value}")
+            print(f"[!] Reason: {reason}")
         else:
-            print("No <extValue> provided with the error.")
+            print("[!] No <extValue> provided with the error.")
+
+def parse_domain_delete_response(xml_response):
+    ns = {'epp': 'urn:ietf:params:xml:ns:epp-1.0'}
+
+    try:
+        root = ET.fromstring(xml_response)
+        result = root.find('.//epp:result', ns)
+        code = result.attrib.get('code')
+        message = result.findtext('epp:msg', default='No message', namespaces=ns)
+
+        print(f"[+] Response code: {code}")
+        print(f"[+] Message: {message}")
+
+        if code == "1000":
+            print("[*] Command completed successfully.")
+        elif code == "1001":
+            print("[*] Command completed successfully, but action is pending.")
+        else:
+            print("[!] Response code not recognized.")
+    except Exception as e:
+        print(f"[!] Error parsing XML response: {e}")

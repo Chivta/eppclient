@@ -165,3 +165,16 @@ def contact_create(contact_id, name, city, country_code, email, password):
     </create>
   </command>
 </epp>'''.encode("utf-8")
+
+def domain_delete(domain:str)->bytes:
+    return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+    <command>
+      <delete>
+        <domain:delete xmlns:domain="http://hostmaster.ua/epp/domain-1.1">
+          <domain:name>{domain}</domain:name>
+        </domain:delete>
+      </delete>
+    </command>
+  </epp>
+    '''.encode("utf-8")

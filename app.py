@@ -16,11 +16,12 @@ data = {
     "password": password,
 }
 
-response = epp_client.login(**data)
+def login():
+    response = epp_client.login(**data)
 
-if '<result code="1000">' not in response:
-    print("Could not login")
-    exit()
+    if '<result code="1000">' not in response:
+        print("Could not login")
+        exit()
 
 def unlog_and_exit():
     epp_client.logout()
@@ -30,6 +31,7 @@ def unlog_and_exit():
 
 # console app main entry
 def main():
+    login()
     while True:
         print("1. Domain\n2. Host\n3. Contact\n0. Exit")
         choice = input("Choose an option: ").strip()
@@ -37,14 +39,14 @@ def main():
         if action:
             action()
         else:
-            print("Invalid choice. Try again.\n")
-
+            print("Invalid choice. Try again.")
+        print()
 
 # ===  DOMAIN MENU  ===
 
 def domain_menu():
     while True:
-        print("1. Domain check\n2. Domain info\n3. Domain create\n4. Back")
+        print("1. Domain check\n2. Domain info\n3. Domain create\n4. Domain delete\n5. Exit")
         choice = input("Choose an option: ").strip()
         action = domain_menu_actions.get(choice)
         if action:
@@ -53,6 +55,7 @@ def domain_menu():
             return
         else:
             print("Invalid choice.\n")
+        print()
 
 
 def domain_create():
@@ -119,10 +122,19 @@ def domain_info():
     parse_domain_info(response)
 
 
+def domain_delete():
+    print("=== Domain delete ===")
+    domain = input("Enter domain name: ")
+
+    response = epp_client.domain_delete(domain)
+
+    parse_domain_delete_response(response)
+
 domain_menu_actions = {
     "1": domain_check,
     "2": domain_info,
     "3": domain_create,
+    "4": domain_delete
 }
 
 # ===  HOST MENU  ===
@@ -137,6 +149,7 @@ def host_menu():
             return
         else:
             print("Invalid choice.\n")
+        print()
 
 def host_check():
     print("=== Host check ===")
@@ -181,6 +194,7 @@ def contact_menu():
             return
         else:
             print("Invalid choice.\n")
+        print()
 
 def contact_info():
     print("=== Contact check ===")
