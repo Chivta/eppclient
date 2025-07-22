@@ -62,6 +62,12 @@ class EPPClient:
 
         return self._get_response()
 
+    def host_info(self,name):
+        host_info_xml = XMLGenerator.host_info(name)
+        self.connection.send_xml(host_info_xml)
+
+        return self._get_response()
+
     def contact_info(self, contacts):
         contact_info_xml = XMLGenerator.contact_info(contacts)
 

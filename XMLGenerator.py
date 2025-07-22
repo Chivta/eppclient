@@ -192,3 +192,17 @@ def contact_delete(contact_id:str)->bytes:
     </command>
   </epp>
 '''.encode("utf-8")
+
+
+def host_info(name):
+    return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+ <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+   <command>
+     <info>
+       <host:info xmlns:host="http://hostmaster.ua/epp/host-1.1">
+         <host:name>{name}</host:name>
+       </host:info>
+     </info>
+   </command>
+ </epp>
+'''.encode("utf-8")

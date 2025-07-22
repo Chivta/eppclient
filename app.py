@@ -139,12 +139,12 @@ domain_menu_actions = {
 # ===  HOST MENU  ===
 def host_menu():
     while True:
-        print("1. Host check\n2. Host create\n3. Back")
+        print("1. Host check\n2. Host info\n3. Host create\n4. Exit")
         choice = input("Choose an option: ").strip()
         action = host_menu_actions.get(choice)
         if action:
             action()
-        elif choice == "3":
+        elif choice == "4":
             return
         else:
             print("Invalid choice.\n")
@@ -175,9 +175,19 @@ def host_create():
 
     parse_host_create_response(response)
 
+def host_info():
+    print("=== Host Info ===")
+    name = input("Enter host name: ")
+
+    response = epp_client.host_info(name)
+
+    parse_host_info_response(response)
+
+
 host_menu_actions = {
     "1":host_check,
-    "2":host_create
+    "2":host_info,
+    "3":host_create,
 }
 
 # ===  CONTACT MENU  ===

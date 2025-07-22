@@ -1,24 +1,13 @@
 import xml.etree.ElementTree as ET
-
+from config import ns
+from response_parsers.general_func import parse_result_element
 # response_parsers that are used only for printing in console
 
 def parse_domain_info(xml_string):
-    ns = {
-        'epp': 'urn:ietf:params:xml:ns:epp-1.0',
-        'domain': 'http://hostmaster.ua/epp/domain-1.1'
-    }
-
     root = ET.fromstring(xml_string)
 
-    result = root.find('.//epp:result', ns)
-    if result is not None:
-        code = result.attrib.get('code')
-        message = result.findtext('epp:msg', default='No message', namespaces=ns)
-        print(f"[+] Response code: {code}")
-        print(f"[+] Message: {message}")
-        if code != '1000':
-            print("[!] Error occurred, skipping detailed info.")
-            return
+    # Parse result
+    parse_result_element(root)
 
     for inf_data in root.findall('.//domain:infData', ns):
         print("[*] Domain Information:")
@@ -50,17 +39,9 @@ def parse_domain_info(xml_string):
         print("  Auth Info PW:", inf_data.findtext('domain:authInfo/domain:pw', default='N/A', namespaces=ns))
 
 def parse_domain_check_response(xml_string):
-    ns = {
-        'epp': 'urn:ietf:params:xml:ns:epp-1.0',
-        'domain': 'http://hostmaster.ua/epp/domain-1.1'
-    }
-
     root = ET.fromstring(xml_string)
-    result = root.find('.//epp:result', ns)
-    code = result.attrib.get('code')
-    message = result.findtext('epp:msg', default='No message', namespaces=ns)
-    print(f"[+] Response code: {code}")
-    print(f"[+] Message: {message}\n")
+    # Parse result
+    parse_result_element(root)
 
     for cd in root.findall('.//domain:cd', ns):
         name_elem = cd.find('domain:name', ns)
@@ -72,18 +53,9 @@ def parse_domain_check_response(xml_string):
         print(f"[*] {name}: {status} ({reason})")
 
 def parse_domain_create_response(xml_string):
-    ns = {
-        'epp': 'urn:ietf:params:xml:ns:epp-1.0',
-        'domain': 'http://hostmaster.ua/epp/domain-1.1'
-    }
-
     root = ET.fromstring(xml_string)
-    result_elem = root.find('.//epp:result', ns)
-    code = result_elem.attrib.get('code')
-    message = result_elem.findtext('epp:msg', default='No message', namespaces=ns)
-
-    print(f"[+] Response code: {code}")
-    print(f"[+] Message: {message}\n")
+    # Parse result
+    code = parse_result_element(root)
 
     if code == "1000":
         cre_data = root.find('.//domain:creData', ns)
@@ -109,22 +81,6 @@ def parse_domain_create_response(xml_string):
             print("[!] No <extValue> provided with the error.")
 
 def parse_domain_delete_response(xml_response):
-    ns = {'epp': 'urn:ietf:params:xml:ns:epp-1.0'}
-
-    try:
-        root = ET.fromstring(xml_response)
-        result = root.find('.//epp:result', ns)
-        code = result.attrib.get('code')
-        message = result.findtext('epp:msg', default='No message', namespaces=ns)
-
-        print(f"[+] Response code: {code}")
-        print(f"[+] Message: {message}")
-
-        if code == "1000":
-            print("[*] Command completed successfully.")
-        elif code == "1001":
-            print("[*] Command completed successfully, but action is pending.")
-        else:
-            print("[!] Response code not recognized.")
-    except Exception as e:
-        print(f"[!] Error parsing XML response: {e}")
+    root = ET.fromstring(xml_response)
+    # Parse result
+    parse_result_element(root)

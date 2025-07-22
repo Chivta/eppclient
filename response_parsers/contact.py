@@ -1,41 +1,22 @@
 import xml.etree.ElementTree as ET
+from config import ns
+from response_parsers.general_func import parse_result_element
 
 # response_parsers that are used only for printing in console
 
 def parse_host_create_response(xml_string):
-    ns = {'epp': 'urn:ietf:params:xml:ns:epp-1.0'}
     root = ET.fromstring(xml_string)
-
-    result = root.find('.//epp:result', ns)
-    if result is not None:
-        code = result.attrib.get('code')
-        msg = result.find('epp:msg', ns)
-        print(f"[+] Response code: {code}")
-        if msg is not None:
-            print(f"[*] Message: {msg.text}")
-        else:
-            print("[!] Message not found.")
-    else:
-        print("[!] <result> element not found.")
-
+    # Parse result
+    parse_result_element(root)
 
 def parse_contact_info(xml_string):
-    ns = {
-        'epp': 'urn:ietf:params:xml:ns:epp-1.0',
-        'contact': 'http://hostmaster.ua/epp/contact-1.1'
-    }
-
     root = ET.fromstring(xml_string)
 
-    # Extract and print result code and message
-    result = root.find('.//epp:result', ns)
-    code = result.attrib.get('code', 'N/A')
-    msg = result.findtext('epp:msg', default='No message', namespaces=ns)
-    print(f"[+] Response code: {code}")
-    print(f"[*] Message: {msg}")
+    # Parse result
+    code = parse_result_element(root)
 
-    # Extract contact:infData
-    if(code.startswith("2")):
+    # Skip parsing if result code starts with '2' (error)
+    if code.startswith("2"):
         return
 
     inf_data = root.find('.//contact:infData', ns)
@@ -98,19 +79,8 @@ def parse_contact_info(xml_string):
             else:
                 print(f"    - {tag}")
 
-
 def parse_contact_delete(xml_string):
-    ns = {'epp': 'urn:ietf:params:xml:ns:epp-1.0'}
     root = ET.fromstring(xml_string)
 
-    result = root.find('.//epp:result', ns)
-    if result is not None:
-        code = result.attrib.get('code')
-        msg = result.find('epp:msg', ns)
-        print(f"[+] Response code: {code}")
-        if msg is not None and msg.attrib.get('lang') == 'en':
-            print(f"[*] Message: {msg.text}")
-        else:
-            print("[!] English message not found in <msg> tag.")
-    else:
-        print("[!] <result> tag not found.")
+    # Parse result
+    parse_result_element(root)
