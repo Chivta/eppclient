@@ -1,7 +1,6 @@
-
 # XML templates for requests
 
-def login(cl_id: str, password: str) -> bytes:
+def login(cl_id: str, password: str) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
   <command>
@@ -26,18 +25,18 @@ def login(cl_id: str, password: str) -> bytes:
       </svcs>
     </login>
   </command>
-</epp>'''.encode("utf-8")
+</epp>'''
 
 
-def logout() -> bytes:
+def logout() -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
   <command>
     <logout/>
   </command>
-</epp>'''.encode("utf-8")
+</epp>'''
 
-def domain_check(domains: list[str])-> bytes:
+def domain_check(domains: list[str]) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
    <command>
@@ -47,14 +46,14 @@ def domain_check(domains: list[str])-> bytes:
        </domain:check>
      </check>
    </command>
- </epp>'''.encode("utf-8")
+ </epp>'''
 
-def hello()-> bytes:
+def hello() -> str:
     return f'''
  <?xml version="1.0" encoding="UTF-8" standalone="no"?>
  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
    <hello/>
- </epp>'''.encode("utf-8")
+ </epp>'''
 
 def generate_hosts(ns : list) -> str:
     if not ns: return ""
@@ -73,7 +72,7 @@ def generate_hosts(ns : list) -> str:
     result += "</domain:ns>"
     return result
 
-def domain_info(domain: str):
+def domain_info(domain: str) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
     <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
       <command>
@@ -83,9 +82,9 @@ def domain_info(domain: str):
           </domain:info>
         </info>
       </command>
-    </epp>'''.encode("utf-8")
+    </epp>'''
 
-def domain_create(name : str, period : int, ns, registrant : str, contacts : list[tuple[str, str]])-> bytes:
+def domain_create(name : str, period : int, ns, registrant : str, contacts : list[tuple[str, str]]) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
     <command>
@@ -99,9 +98,9 @@ def domain_create(name : str, period : int, ns, registrant : str, contacts : lis
         </domain:create>
       </create>
     </command>
-  </epp>'''.encode("utf-8")
+  </epp>'''
 
-def host_check(hosts):
+def host_check(hosts) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
    <command>
@@ -112,9 +111,9 @@ def host_check(hosts):
      </check>
    </command>
 </epp>
-'''.encode("utf-8")
+'''
 
-def contact_info(contact):
+def contact_info(contact) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
    <command>
@@ -125,10 +124,10 @@ def contact_info(contact):
      </info>
    </command>
  </epp>
-'''.encode("utf-8")
+'''
 
 
-def host_create(name,ipv4,ipv6):
+def host_create(name,ipv4,ipv6) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
    <command>
@@ -140,10 +139,10 @@ def host_create(name,ipv4,ipv6):
        </host:create>
      </create>
    </command>
- </epp>'''.encode("utf-8")
+ </epp>'''
 
 
-def contact_create(contact_id, name, city, country_code, email, password):
+def contact_create(contact_id, name, city, country_code, email, password) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
   <command>
@@ -164,9 +163,9 @@ def contact_create(contact_id, name, city, country_code, email, password):
       </contact:create>
     </create>
   </command>
-</epp>'''.encode("utf-8")
+</epp>'''
 
-def domain_delete(domain:str)->bytes:
+def domain_delete(domain:str) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
     <command>
@@ -177,10 +176,10 @@ def domain_delete(domain:str)->bytes:
       </delete>
     </command>
   </epp>
-    '''.encode("utf-8")
+    '''
 
 
-def contact_delete(contact_id:str)->bytes:
+def contact_delete(contact_id:str) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
     <command>
@@ -191,10 +190,10 @@ def contact_delete(contact_id:str)->bytes:
       </delete>
     </command>
   </epp>
-'''.encode("utf-8")
+'''
 
 
-def host_info(name):
+def host_info(name) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
  <epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
    <command>
@@ -205,4 +204,4 @@ def host_info(name):
      </info>
    </command>
  </epp>
-'''.encode("utf-8")
+'''

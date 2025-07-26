@@ -1,3 +1,4 @@
+from EPPStream import EPPStream
 from config import *
 from response_parsers.domain import *
 from response_parsers.host import *
@@ -8,12 +9,15 @@ from EPPClient import EPPClient
 # creating a socket and wrapping in into a tls context
 connection = EPPServerConnection(HOST, PORT, "client.pem", "client.key")
 connection.handshake()
-epp_client = EPPClient(connection)
+
+epp_stream = EPPStream(connection)
+
+epp_client = EPPClient(epp_stream)
 
 
 data = {
-    "cl_id": user_login,
-    "password": password,
+    "cl_id": LOGIN,
+    "PASSWORD": PASSWORD,
 }
 
 def login():
@@ -220,7 +224,7 @@ def contact_create():
     city = input("Enter city: ")
     country_code = input("Enter country code: ")
     email = input("Enter email: ")
-    _password = input("Enter password: ")
+    _password = input("Enter PASSWORD: ")
 
     print(f"Creating contact: {contact_id}")
     response = epp_client.contact_create(contact_id, name, city, country_code, email, _password)

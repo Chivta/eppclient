@@ -1,13 +1,15 @@
 import socket
 import ssl
 import struct
+from argparse import ArgumentError, ArgumentTypeError
+
 
 # Class for handling socket, tls context and message sending/receiving
 class EPPServerConnection:
     def __init__(self, host, port, certfile, keyfile):
-        self.secure_sock : ssl.SSLSocket  = None
+        self.secure_sock: ssl.SSLSocket  = None
         self.sock = None
-        self.context : ssl.SSLContext = None
+        self.context: ssl.SSLContext = None
         self.host = host
         self.port = port
         self.certfile = certfile
@@ -16,9 +18,7 @@ class EPPServerConnection:
         self._setup_secure_sock()
 
     def __del__(self):
-        if self.secure_sock:
-            self.secure_sock.close()
-            self.secure_sock = None
+        self.close()
 
     def close(self):
         if self.secure_sock:
@@ -32,9 +32,16 @@ class EPPServerConnection:
         self.context.verify_mode = ssl.CERT_NONE
         self.context.load_cert_chain(certfile=self.certfile, keyfile=self.keyfile)
 
+        self.handshake()
+
+    def set_timeout(self,sec:int):
+        if self.secure_sock:
+            self.secure_sock.settimeout(sec)
+        else:
+            raise RuntimeError("Socket is unset")
 
     def handshake(self):
-        self.secure_sock = self.context.wrap_socket(self.sock,
+        self.secure_sock: ssl.SSLSocket = self.context.wrap_socket(self.sock,
                                                     server_side=False,
                                                     server_hostname=self.host,
                                                     do_handshake_on_connect=False)
@@ -42,15 +49,18 @@ class EPPServerConnection:
         self.secure_sock.settimeout(20)
         self.secure_sock.do_handshake()
 
-        self.read_socket()
+        self.read()
 
 
-    def send_xml(self, xml_bytes):
+    def send(self, xml_bytes: str | bytes):
         if not self.secure_sock:
-            raise Exception("Socket is unset")
+            raise RuntimeError("Socket is unset")
+
+        if isinstance(xml_bytes, str):
+            xml_bytes = xml_bytes.encode("utf-8")
 
         if not isinstance(xml_bytes, bytes):
-            raise TypeError("Expected bytes, got str")
+            raise ArgumentTypeError(f"Expected bytes or string got: {type(xml_bytes)}")
 
         prefix = struct.pack("!I", len(xml_bytes) + 4)
         content = prefix + xml_bytes
@@ -69,7 +79,7 @@ class EPPServerConnection:
                 return None
         return data
 
-    def read_socket(self):
+    def read(self):
         if not self.secure_sock:
             raise Exception("Socket is unset")
 

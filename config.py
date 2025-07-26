@@ -8,5 +8,8 @@ ns = {
     'contact':"http://hostmaster.ua/epp/contact-1.1"
 }
 
-user_login = ""
-password = ""
+LOGIN = ""
+PASSWORD = ""
+
+CERTFILE = "client.pem"
+KEYFILE = "client.key"
