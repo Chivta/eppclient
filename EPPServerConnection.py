@@ -72,7 +72,7 @@ class EPPServerConnection:
             try:
                 chunk = self.secure_sock.recv(size - len(data))
                 if not chunk:
-                    raise Exception("Connection closed by peer during recv")
+                    raise ConnectionError("Connection closed by peer during recv")
                 data += chunk
             except socket.timeout:
                 print("timeout")
@@ -88,7 +88,6 @@ class EPPServerConnection:
             raise Exception("Timed out waiting for message length")
 
         total_len = struct.unpack("!I", prefix)[0]
-
         remaining = total_len - 4
         content = self.recv_exact(remaining)
 

@@ -22,6 +22,11 @@ class EPPClient:
         response = self.stream.exchange_messages(logout_xml)
         return response
 
+    def hello(self):
+        hello_xml = XMLGenerator.hello()
+        response = self.stream.exchange_messages(hello_xml)
+        return response
+
     def domain_check(self, domains : list[str]):
         check_domain_xml = XMLGenerator.domain_check(domains)
         response = self.stream.exchange_messages(check_domain_xml)

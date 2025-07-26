@@ -7,8 +7,7 @@ from EPPServerConnection import EPPServerConnection
 from EPPClient import EPPClient
 
 # creating a socket and wrapping in into a tls context
-connection = EPPServerConnection(HOST, PORT, "client.pem", "client.key")
-connection.handshake()
+connection = EPPServerConnection(HOST, PORT, CERTFILE, KEYFILE)
 
 epp_stream = EPPStream(connection)
 
@@ -17,7 +16,7 @@ epp_client = EPPClient(epp_stream)
 
 data = {
     "cl_id": LOGIN,
-    "PASSWORD": PASSWORD,
+    "password": PASSWORD,
 }
 
 def login():
