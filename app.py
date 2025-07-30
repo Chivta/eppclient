@@ -63,25 +63,31 @@ def domain_menu():
 def domain_create():
     print("=== Creating a domain ===")
     name = input("Enter domain name: ")
-    ns = get_nameservers()
+    name_servers = get_nameservers()
     registrant = input("Enter registrant: ")
     contacts = get_contacts()
-    # ... gather other fields
+
     print(f"Creating domain: {name}")
 
-    response = epp_client.domain_create(name, 1, ns, registrant, contacts)
+    response = epp_client.domain_create(name, 1, name_servers, registrant, contacts)
 
     parse_domain_create_response(response)
 
 
 def get_nameservers():
+    print("Adding name servers")
     res = []
     while len(res) <= 10:
-        usr_inp = input("Enter name server or q to quit:")
-        if (usr_inp == "" or usr_inp == "q"):
+        usr_inp = input("1. Add existing host 2. Add new host 3. Stop adding name servers ")
+        if usr_inp == "1":
+            res.append(input("Enter host name: "))
+        elif usr_inp == "2":
+            name = input("Enter host name: ")
+            ipv4 = input("Enter ipv4 or empty line for none: ")
+            ipv6 = input("Enter ipv6 or empty line for none: ")
+            res.append((name,{"v4":ipv4,"v6":ipv6}))
+        elif usr_inp == "" or usr_inp == "3":
             break
-
-        res.append(usr_inp)
 
     return res
 

@@ -54,7 +54,7 @@ def hello() -> str:
    <hello/>
  </epp>'''
 
-def generate_hosts(ns : list) -> str:
+def build_hosts(ns : list) -> str:
     if not ns: return ""
     result = "<domain:ns>\n"
 
@@ -65,7 +65,8 @@ def generate_hosts(ns : list) -> str:
             result += "<domain:hostAttr>\n"
             result += f"<domain:hostName>{serv[0]}</domain:hostName>\n"
             for v, adr in serv[1].items():
-                result += f'<domain:hostAddr ip="{v}">{adr}</domain:hostAddr>\n'
+                if adr:
+                    result += f'<domain:hostAddr ip="{v}">{adr}</domain:hostAddr>\n'
             result += "</domain:hostAttr>\n"
 
     result += "</domain:ns>"
@@ -91,7 +92,7 @@ def domain_create(name : str, period : int, ns, registrant : str, contacts : lis
         <domain:create xmlns:domain="http://hostmaster.ua/epp/domain-1.1">
           <domain:name>{name}</domain:name>
           <domain:period unit="y">{period}</domain:period>
-            {generate_hosts(ns)}
+            {build_hosts(ns)}
           <domain:registrant>{registrant}</domain:registrant>
           {"\n".join(f'<domain:contact type="{type_}">{text}</domain:contact>' for type_, text in contacts)}
         </domain:create>
