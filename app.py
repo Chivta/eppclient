@@ -203,16 +203,29 @@ host_menu_actions = {
 
 def contact_menu():
     while True:
-        print("1. Contact info\n2. Contact create\n3. Contact delete\n4. Exit")
+        print("1. Contact check\n2. Contact info\n3. Contact create\n4. Contact delete\n5. Exit")
         choice = input("Choose an option: ").strip()
         action = contact_menu_actions.get(choice)
         if action:
             action()
-        elif choice == "4":
+        elif choice == "5":
             return
         else:
             print("Invalid choice.\n")
         print()
+
+def contact_check():
+    print("=== Contact check ===")
+    contacts = []
+    while len(contacts) <= 10:
+        contact = input("Enter host name or q to stop: ")
+        if (contact == "" or contact == "q"):
+            break
+
+        contacts.append(contact)
+    response = epp_client.contact_check(contacts)
+
+    parse_contact_check_response(response)
 
 def contact_info():
     print("=== Contact check ===")
@@ -244,9 +257,10 @@ def contact_delete():
     parse_contact_delete(response)
 
 contact_menu_actions = {
-    "1": contact_info,
-    "2": contact_create,
-    "3": contact_delete
+    "1": contact_check,
+    "2": contact_info,
+    "3": contact_create,
+    "4": contact_delete
 }
 
 

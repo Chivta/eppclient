@@ -32,7 +32,7 @@ class EPPClient:
         response = self.stream.exchange_messages(check_domain_xml)
         return response
 
-    def domain_create(self, name : str, period : int, ns, registrant : str, contacts : list[(str,str)]):
+    def domain_create(self, name : str, period : int, ns: list, registrant : str, contacts : list[(str,str)]):
         domain_create_xml = XMLGenerator.domain_create(name, period, ns, registrant, contacts)
 
         response = self.stream.exchange_messages(domain_create_xml)
@@ -79,5 +79,12 @@ class EPPClient:
         contact_delete_xml = XMLGenerator.contact_delete(contact_id)
 
         response = self.stream.exchange_messages(contact_delete_xml)
+
+        return response
+
+    def contact_check(self, contact_id):
+        contact_check_xml = XMLGenerator.contact_check(contact_id)
+
+        response = self.stream.exchange_messages(contact_check_xml)
 
         return response

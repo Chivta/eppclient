@@ -1,9 +1,9 @@
 # XML templates for requests
-from config import ns
+from config import namespaces
 
 def wrap_in_epp_element(content: str) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
- <epp xmlns="{ns["epp"]}">
+ <epp xmlns="{namespaces["epp"]}">
     {content}
  </epp>'''
 
@@ -20,9 +20,9 @@ def login(cl_id: str, password: str) -> str:
       </options>
       <svcs>
         <objURI>urn:ietf:params:xml:ns:epp-1.0</objURI>
-        <objURI>http://hostmaster.ua/epp/contact-1.1</objURI>
-        <objURI>http://hostmaster.ua/epp/domain-1.1</objURI>
-        <objURI>http://hostmaster.ua/epp/host-1.1</objURI>
+        <objURI>{namespaces["contact"]}</objURI>
+        <objURI>{namespaces["domain"]}</objURI>
+        <objURI>{namespaces["host"]}</objURI>
         <svcExtension>
           <extURI>http://hostmaster.ua/epp/rgp-1.1</extURI>
           <extURI>http://hostmaster.ua/epp/uaepp-1.1</extURI>
@@ -44,7 +44,7 @@ def domain_check(domains: list[str]) -> str:
     return wrap_in_epp_element(f'''
     <command>
      <check>
-       <domain:check xmlns:domain="http://hostmaster.ua/epp/domain-1.1">
+       <domain:check xmlns:domain="{namespaces["domain"]}">
          {"".join(f"<domain:name>{domain}</domain:name>" for domain in domains)}
        </domain:check>
      </check>
@@ -76,7 +76,7 @@ def domain_info(domain: str) -> str:
     return wrap_in_epp_element(f'''
     <command>
         <info>
-          <domain:info xmlns:domain="http://hostmaster.ua/epp/domain-1.1">
+          <domain:info xmlns:domain="{namespaces["domain"]}">
             <domain:name>{domain}</domain:name>
           </domain:info>
         </info>
@@ -86,7 +86,7 @@ def domain_create(name : str, period : int, ns, registrant : str, contacts : lis
     return wrap_in_epp_element(f'''
     <command>
       <create>
-        <domain:create xmlns:domain="http://hostmaster.ua/epp/domain-1.1">
+        <domain:create xmlns:domain="{namespaces["domain"]}">
           <domain:name>{name}</domain:name>
           <domain:period unit="y">{period}</domain:period>
             {build_hosts(ns)}
@@ -100,7 +100,7 @@ def host_check(hosts) -> str:
     return wrap_in_epp_element(f'''
    <command>
      <check>
-       <host:check xmlns:host="http://hostmaster.ua/epp/host-1.1">
+       <host:check xmlns:host="{namespaces["host"]}">
          {"\n".join(f"<host:name>{host}</host:name>" for host in hosts) }
        </host:check>
      </check>
@@ -110,7 +110,7 @@ def contact_info(contact) -> str:
     return wrap_in_epp_element(f'''
    <command>
      <info>
-       <contact:info xmlns:contact="http://hostmaster.ua/epp/contact-1.1">
+       <contact:info xmlns:contact="{namespaces["contact"]}">
          <contact:id>{contact}</contact:id>
        </contact:info>
      </info>
@@ -121,7 +121,7 @@ def host_create(name,ipv4,ipv6) -> str:
     return wrap_in_epp_element(f'''
     <command>
      <create>
-       <host:create xmlns:host="http://hostmaster.ua/epp/host-1.1">
+       <host:create xmlns:host="{namespaces["host"]}">
          <host:name>{name}</host:name>
            {f"<host:addr ip='v4'>{ipv4}</host:addr>" if ipv4 else ""}
            {f"<host:addr ip='v6'>{ipv6}</host:addr>" if ipv6 else ""}
@@ -134,7 +134,7 @@ def contact_create(contact_id, name, city, country_code, email, password) -> str
     return wrap_in_epp_element(f'''
     <command>
         <create>
-          <contact:create xmlns:contact="http://hostmaster.ua/epp/contact-1.1">
+          <contact:create xmlns:contact="{namespaces["contact"]}">
             <contact:id>{contact_id}</contact:id>
             <contact:postalInfo type="int">
               <contact:name>{name}</contact:name>
@@ -155,7 +155,7 @@ def domain_delete(domain:str) -> str:
     return wrap_in_epp_element(f'''
     <command>
       <delete>
-        <domain:delete xmlns:domain="http://hostmaster.ua/epp/domain-1.1">
+        <domain:delete xmlns:domain="{namespaces["domain"]}">
           <domain:name>{domain}</domain:name>
         </domain:delete>
       </delete>
@@ -166,19 +166,18 @@ def contact_delete(contact_id:str) -> str:
     return wrap_in_epp_element(f'''
     <command>
       <delete>
-        <contact:delete xmlns:contact="http://hostmaster.ua/epp/contact-1.1">
+        <contact:delete xmlns:contact="{namespaces["contact"]}">
           <contact:id>{contact_id}</contact:id>
         </contact:delete>
       </delete>
     </command>''')
 
-def contact_check(contact_id:str) -> str:
+def contact_check(contact_ids:list[str]) -> str:
     return wrap_in_epp_element(f'''
     <command>
      <check>
-       <contact:check
-        xmlns:contact="http://hostmaster.ua/epp/contact-1.1">
-         <contact:id>{contact_id}</contact:id>
+       <contact:check xmlns:contact="{namespaces["contact"]}">
+        {"".join(f"<contact:id>{contact_id}</contact:id>" for contact_id in contact_ids)}
        </contact:check>
      </check>
    </command>''')
