@@ -8,6 +8,8 @@ NAMESPACES = {
     'contact':"http://hostmaster.ua/epp/contact-1.1"
 }
 
+PERMANENT_CONTACT_ID = "permanent-test"
+
 LOGIN = ""
 PASSWORD = ""
 
