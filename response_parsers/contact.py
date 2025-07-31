@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
-from config import namespaces
-from response_parsers.general_func import parse_result_element
+from config import NAMESPACES
+from general_func import parse_result_element
 
 # response_parsers that are used only for printing in console
 
@@ -9,14 +9,14 @@ def parse_contact_check_response(xml_string):
     # Parse result
     parse_result_element(root)
 
-    for cd in root.findall('.//contact:cd', namespaces):
-        id_elem = cd.find('contact:id', namespaces)
+    for cd in root.findall('.//contact:cd', NAMESPACES):
+        id_elem = cd.find('contact:id', NAMESPACES)
         if id_elem is None:
             continue  # skip invalid entry
 
         contact_id = id_elem.text
         avail = id_elem.attrib.get('avail', '0')
-        reason_elem = cd.find('contact:reason', namespaces)
+        reason_elem = cd.find('contact:reason', NAMESPACES)
         reason = reason_elem.text if reason_elem is not None else "Available"
         status = "Available" if avail == "1" else "Not Available"
 
@@ -33,37 +33,37 @@ def parse_contact_info(xml_string):
     if code.startswith("2"):
         return
 
-    inf_data = root.find('.//contact:infData', namespaces)
+    inf_data = root.find('.//contact:infData', NAMESPACES)
     if inf_data is None:
         print("[!] No <contact:infData> section found.")
         return
 
     def get_text(tag):
-        el = inf_data.find(f'contact:{tag}', namespaces)
+        el = inf_data.find(f'contact:{tag}', NAMESPACES)
         return el.text if el is not None else "N/A"
 
     print("[*] Contact Info:")
     print(f"    - ID: {get_text('id')}")
     print(f"    - ROID: {get_text('roid')}")
 
-    status = inf_data.find('contact:status', namespaces)
+    status = inf_data.find('contact:status', NAMESPACES)
     if status is not None:
         print(f"    - Status: {status.attrib.get('s')}")
 
     # Postal Info (both int and loc)
-    for pi in inf_data.findall('contact:postalInfo', namespaces):
+    for pi in inf_data.findall('contact:postalInfo', NAMESPACES):
         ptype = pi.attrib.get('type')
         print(f"[*] Postal Info ({ptype}):")
-        name = pi.findtext('contact:name', default='', namespaces=namespaces)
-        org = pi.findtext('contact:org', default='', namespaces=namespaces)
+        name = pi.findtext('contact:name', default='', namespaces=NAMESPACES)
+        org = pi.findtext('contact:org', default='', namespaces=NAMESPACES)
         print(f"    - Name: {name}")
         print(f"    - Org: {org}")
-        addr = pi.find('contact:addr', namespaces)
+        addr = pi.find('contact:addr', NAMESPACES)
         if addr is not None:
-            street = [s.text for s in addr.findall('contact:street', namespaces)]
-            city = addr.findtext('contact:city', default='', namespaces=namespaces)
-            pc = addr.findtext('contact:pc', default='', namespaces=namespaces)
-            cc = addr.findtext('contact:cc', default='', namespaces=namespaces)
+            street = [s.text for s in addr.findall('contact:street', NAMESPACES)]
+            city = addr.findtext('contact:city', default='', namespaces=NAMESPACES)
+            pc = addr.findtext('contact:pc', default='', namespaces=NAMESPACES)
+            cc = addr.findtext('contact:cc', default='', namespaces=NAMESPACES)
             print(f"    - Street: {' / '.join(street)}")
             print(f"    - City: {city}")
             print(f"    - Postal Code: {pc}")
@@ -76,11 +76,11 @@ def parse_contact_info(xml_string):
     print(f"[*] Creation Date: {get_text('crDate')}")
 
     # AuthInfo
-    auth_pw = inf_data.findtext('contact:authInfo/contact:pw', default='N/A', namespaces=namespaces)
+    auth_pw = inf_data.findtext('contact:authInfo/contact:pw', default='N/A', namespaces=NAMESPACES)
     print(f"[*] Auth Info PW: {auth_pw}")
 
     # Disclose Info
-    disclose = inf_data.find('contact:disclose', namespaces)
+    disclose = inf_data.find('contact:disclose', NAMESPACES)
     if disclose is not None:
         print("[*] Disclose Info:")
         flag = disclose.attrib.get('flag')

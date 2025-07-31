@@ -117,7 +117,6 @@ def domain_check():
 
         domains.append(name)
     response = epp_client.domain_check(domains)
-
     parse_domain_check_response(response)
 
 
@@ -224,7 +223,6 @@ def contact_check():
 
         contacts.append(contact)
     response = epp_client.contact_check(contacts)
-
     parse_contact_check_response(response)
 
 def contact_info():

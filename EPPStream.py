@@ -1,5 +1,6 @@
 from EPPServerConnection import EPPServerConnection
 
+
 # class for sending request and receiving responses
 class EPPStream:
     def __init__(self, connection: EPPServerConnection):

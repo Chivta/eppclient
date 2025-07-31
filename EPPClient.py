@@ -34,7 +34,6 @@ class EPPClient:
 
     def domain_create(self, name : str, period : int, ns: list, registrant : str, contacts : list[(str,str)]):
         domain_create_xml = XMLGenerator.domain_create(name, period, ns, registrant, contacts)
-
         response = self.stream.exchange_messages(domain_create_xml)
         return response
 
