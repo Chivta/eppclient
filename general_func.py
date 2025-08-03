@@ -14,25 +14,37 @@ def parse_result_element(root: Element) -> str:
         return code
     return "2000"
 
-def get_code_and_message(xml_string : str) -> tuple[int,str]:
+
+def get_code(xml_string: str) -> int:
+    root = ET.fromstring(xml_string)
+    result = root.find('.//epp:result', NAMESPACES)
+
+    if result is not None:
+        code = result.attrib.get('code')
+        return int(code)
+    raise Exception("Invalid argument")
+
+
+def get_code_and_message(xml_string: str) -> tuple[int, str]:
     root = ET.fromstring(xml_string)
     result = root.find('.//epp:result', NAMESPACES)
 
     if result is not None:
         code = result.attrib.get('code')
         msg = result.find('epp:msg', NAMESPACES)
-        return int(code),msg.text
+        return int(code), msg.text
     raise Exception("Invalid argument")
 
-def save_req(req:str):
-    with open("req.xml","w") as f:
+
+def save_req(req: str):
+    with open("req.xml", "w") as f:
         f.write(req)
 
+
 def save_response(resp, filename="resp.xml"):
-    with open(filename,"w") as f:
+    with open(filename, "w") as f:
         f.write(resp)
 
-import xml.etree.ElementTree as ET
 
 def get_error_reason(xml_string) -> str:
     try:
@@ -61,3 +73,15 @@ def get_error_reason(xml_string) -> str:
 
     except ET.ParseError:
         return None
+
+
+def validate_code_and_reason(response, expected_code, expected_reason):
+    reason = get_error_reason(response)
+
+    code, message = get_code_and_message(response)
+    if code == expected_code:
+        if reason == expected_reason:
+            return True, ""
+        return False, "Expected reason: " + expected_reason + " instead got: " + reason
+
+    return False, message

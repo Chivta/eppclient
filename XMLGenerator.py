@@ -54,7 +54,7 @@ def hello() -> str:
     return wrap_in_epp_element('''
    <hello/>''')
 
-def build_hosts(ns : list) -> str:
+def build_hosts(ns : list[str|tuple[str,dict[str:str]]]) -> str:
     if not ns: return ""
     result = "<domain:ns>\n"
 
@@ -63,7 +63,9 @@ def build_hosts(ns : list) -> str:
             result += f'{f"<domain:hostObj>{serv}</domain:hostObj>"}'
         elif type(serv) == tuple:
             result += "<domain:hostAttr>\n"
-            result += f"<domain:hostName>{serv[0]}</domain:hostName>\n"
+            if host_name:= serv[0]:
+                result += f"<domain:hostName>{host_name}</domain:hostName>\n"
+
             for v, adr in serv[1].items():
                 if adr:
                     result += f'<domain:hostAddr ip="{v}">{adr}</domain:hostAddr>\n'
@@ -82,7 +84,7 @@ def domain_info(domain: str) -> str:
         </info>
     </command>''')
 
-def domain_create(name : str, period : int, ns, registrant : str, contacts : list[tuple[str, str]]) -> str:
+def domain_create(name : str, period : int, ns:list[str|tuple[str,dict[str:str]]], registrant : str, contacts : list[tuple[str, str]]) -> str:
     return wrap_in_epp_element(f'''
     <command>
       <create>
@@ -106,6 +108,16 @@ def host_check(hosts) -> str:
      </check>
    </command>''')
 
+def host_delete(name:str) -> str:
+    return wrap_in_epp_element(f'''
+    <command>
+      <delete>
+        <host:delete xmlns:host="{NAMESPACES["host"]}">
+          <host:name>{name}</host:name>
+        </host:delete>
+      </delete>
+    </command>''')
+
 def contact_info(contact) -> str:
     return wrap_in_epp_element(f'''
    <command>
@@ -117,7 +129,7 @@ def contact_info(contact) -> str:
    </command>''')
 
 
-def host_create(name,ipv4,ipv6) -> str:
+def host_create(name:str,ipv4:str,ipv6:str) -> str:
     return wrap_in_epp_element(f'''
     <command>
      <create>

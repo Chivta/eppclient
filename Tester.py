@@ -2,7 +2,7 @@ from config import *
 from EPPClient import EPPClient
 from EPPServerConnection import EPPServerConnection
 from EPPStream import EPPStream
-from general_func import get_code_and_message, save_response, get_error_reason
+from general_func import get_code_and_message, get_error_reason, get_code
 import random
 import string
 
@@ -11,51 +11,97 @@ try:
 except ImportError as er:
     raise RuntimeError(er.msg)
 
+# decorator for printing test name
+def test_with_name(name):
+    def decorator(fn):
+        def wrapper(self, *args, **kwargs):
+            print(f"Test name: {name}")
+            return fn(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+# decorator for validating response received from test function
+def expect(expected_code: int, expected_reason: str = ""):
+    def decorator(func):
+        def wrapper(self, *args, **kwargs) -> (bool, str):
+            try:
+                response = func(self, *args, **kwargs)
+                code, msg = get_code_and_message(response)
+                reason = get_error_reason(response)
+
+                if expected_code == code:
+                    if expected_reason == reason:
+                        return True, ""
+                    return False, f'Correct code: {expected_code}. Expected reason: "{expected_reason}", but got reason: "{reason}". Message: "{msg}"'
+                return False, f'Expected code: {expected_code}, but got: {code}. Expected reason: "{expected_reason}", got: "{reason}". Message: "{msg}"'
+
+            except Exception as ex:
+                return False, f"An error occurred: {ex}"
+
+        return wrapper
+
+    return decorator
+
 
 class Tester:
-    def __init__(self, login: str, password: str, certfile: str, keyfile: str, permanent_contact_id: str):
+    def __init__(self, login: str, password: str, certfile: str, keyfile: str, permanent_contacts: list, permanent_hosts: list):
         connection = EPPServerConnection(HOST, PORT, certfile, keyfile)
         stream = EPPStream(connection)
         self.client = EPPClient(stream)
 
         self.client.login(login, password)
 
-        self.temp_contact = self._create_temp_testing_contact()
+        self._check_or_create_permanent_contacts(permanent_contacts)
+        self.perm_contacts: list = permanent_contacts
 
-        self._check_or_create_permanent_contact(permanent_contact_id)
-        self.perm_contact = permanent_contact_id
+        self._check_or_create_permanent_hosts(permanent_hosts)
+        self.perm_hosts = permanent_hosts
 
-    def _check_or_create_permanent_contact(self, contact_id: str):
-        response = self.client.contact_check([contact_id])
+        self.domains_to_delete = []
+        self.contacts_to_delete = []
+        self.hosts_to_delete = []
 
-        if f'<contact:id avail="0">{contact_id}</contact:id>' not in response:
-            response = self.client.contact_create(contact_id, "test", "test", "UA", "test@test.test", "test")
-            code, message = get_code_and_message(response)
-            if code != 1000:
-                raise RuntimeError(f"Could not create permanent contact ({contact_id})")
+    def _check_or_create_permanent_hosts(self,hosts: list):
+        for host in hosts:
+            response = self.client.host_check([host])
 
-    def _create_temp_testing_contact(self):
-        contact = generate_contact_name()
-        response = self.client.contact_create(contact, "test", "test", "UA", "test@test.test", "test")
-        code, message = get_code_and_message(response)
-        for _ in range(10):
-            if code == 1000:
-                break
-            contact = generate_contact_name()
-            response = self.client.contact_create(contact, "test", "test", "UA", "test@test.test", "test")
-            code, message = get_code_and_message(response)
+            if f'<host:name avail="0">{host}</host:name>' not in response:
+                response = self.client.domain_check(host)
+                if f'<domain:name avail="0">{host}</domain:name>' not in response:
+                    response = self.client.domain_create(host,1,[],self.perm_contacts[0],[])
+                    if get_code(response) !=1000:
+                        raise RuntimeError('Could not create domain for host "{host}"')
 
-        else:
-            raise RuntimeError("Could not generate valid contact in 10 tries")
+                response = self.client.host_create(host, "1.1.1.1")
+                code, message = get_code_and_message(response)
+                if code != 1000:
+                    raise RuntimeError(f'Could not create permanent host "{host}"')
 
-        return contact
+    def _check_or_create_permanent_contacts(self, contacts: list):
+        for contact_id in contacts:
+            response = self.client.contact_check([contact_id])
+
+            if f'<contact:id avail="0">{contact_id}</contact:id>' not in response:
+                response = self.client.contact_create(contact_id, "test", "test", "UA", "test@test.test", "test")
+                code, message = get_code_and_message(response)
+                if code != 1000:
+                    raise RuntimeError(f"Could not create permanent contact ({contact_id})")
+
 
     def cleanup(self):
-        response = self.client.contact_delete(self.temp_contact)
-        code, message = get_code_and_message(response)
+        for domain in self.domains_to_delete:
+            self.client.domain_delete(domain)
+        self.domains_to_delete.clear()
 
-        if code != 1000:
-            raise RuntimeError(f"Could not delete test contact ({self.temp_contact}): " + message)
+        for contact in self.contacts_to_delete:
+            self.client.contact_delete(contact)
+        self.contacts_to_delete.clear()
+
+        for host in self.hosts_to_delete:
+            self.client.host_delete(host)
+        self.hosts_to_delete.clear()
 
         response = self.client.logout()
         code, message = get_code_and_message(response)
@@ -64,203 +110,237 @@ class Tester:
             raise RuntimeError(f"Could not logout:  " + message)
 
     def safe_create_contact(self):
-        for _ in range(10):
-            test_contact = generate_contact_name()
-            response = self.client.contact_check(test_contact)
-            if f'<contact:reason>Object exists</contact:reason>' not in response:
-                break
+        name = self.get_non_existing_contact()
+        response = self.client.contact_create(name)
+        if get_code(response) != 1000:
+            raise RuntimeError(f'Could not create "{name}" contact')
+        return name
 
-        else:
-            raise RuntimeError("Could not find non existing contact in 10 tries")
 
-        self.client.contact_create(test_contact, "test", "test", "UA", "test@test.test", "test")
+    def safe_create_host(self, suffix=".epp.ua"):
+        name = self.get_non_existing_domain(suffix)
+        response = self.client.domain_create(name,1,[],self.perm_contacts[0],[])
+        if get_code(response) != 1000:
+            raise RuntimeError(f'Could not create "{name}" domain')
 
-        return test_contact
+        response = self.client.host_create(name,"1.1.1.1")
+        if get_code(response) != 1000:
+            raise RuntimeError(f'Could not create "{name}" host')
+        return name
 
-    def safe_create_domain(self):
-        for _ in range(10):
-            temp_domain_name = generate_domain_name(suffix=".epp.ua")
-            response = self.client.domain_create(temp_domain_name, 1, [], self.perm_contact, [])
-            code, message = get_code_and_message(response)
-            if code == 1000:
-                return temp_domain_name
-        raise RuntimeError("Could not create domain in 10 tries")
 
     def get_non_existing_contact(self):
-        for _ in range(10):
-            test_contact = generate_contact_name()
-            response = self.client.contact_check(test_contact)
-            if f'<contact:reason>Object exists</contact:reason>' not in response:
-                return test_contact
+        return try_until_success(
+            generate_random_name,
+            lambda name: f'<contact:reason>Object exists</contact:reason>' not in self.client.contact_check(name),
+            length=10)
 
-        raise RuntimeError("Could not find non existing contact in 10 tries")
+    def get_non_existing_host(self, suffix=".epp.ua"):
+        return try_until_success(
+            generate_random_name,
+            lambda name: f'<host:reason>Object exists</host:reason>' not in self.client.host_check(name),
+            length=10,suffix=suffix)
 
+    def get_non_existing_domain(self, suffix=".epp.ua"):
+        return try_until_success(
+            generate_random_name,
+            lambda name: f'<domain:reason>Object exists</domain:reason>' not in self.client.domain_check(name),
+            length=10, suffix=suffix)
 
-    def validate_code_and_reason(self, response, expected_code, expected_reason):
-        reason = get_error_reason(response)
-
-        code, message = get_code_and_message(response)
-
-        if code == expected_code:
-            if reason == expected_reason:
-                return True, ""
-            return False, "Expected reason: " + expected_reason + " instead got: " + reason
-
-        return False, message
-
+    @test_with_name("test_domain_create_invalid_name")
+    @expect(2005, "Incorrect domain name")
     def test_domain_create_invalid_name(self) -> tuple[bool, str]:
-        expected_code = 2005
-        expected_reason = "Incorrect domain name"
+        domain_name = generate_random_name(10, suffix=".com")
 
-        try:
-            domain_name = generate_domain_name(suffix=".com")
+        response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0], [])
 
-            response = self.client.domain_create(domain_name, 1, [], self.temp_contact, [])
-            result, message = self.validate_code_and_reason(response, expected_code, expected_reason)
+        self.domains_to_delete.append(domain_name)
 
-            if not result:
-                self.client.domain_delete(domain_name)
-            return result, message
+        return response
 
-        except Exception as ex:
-            return False, f"An exception occurred: {ex}"
-
+    @test_with_name("test_domain_create_object_exists")
+    @expect(2302, "Object exists")
     def test_domain_create_object_exists(self) -> tuple[bool, str]:
-        expected_code = 2302
-        expected_reason = "Object exists"
+        temp_domain_name = self.get_non_existing_domain()
+        self.client.domain_create(temp_domain_name,1,[],self.perm_contacts[0],[])
+        self.domains_to_delete.append(temp_domain_name)
 
-        try:
-            temp_domain_name = self.safe_create_domain()
+        # creating same domain again
+        response = self.client.domain_create(temp_domain_name, 1, [], self.perm_contacts[0], [])
 
-            # creating same domain again
-            response = self.client.domain_create(temp_domain_name, 1, [], self.perm_contact, [])
+        return response
 
-            result, message = self.validate_code_and_reason(response, expected_code, expected_reason)
-
-            response = self.client.domain_delete(temp_domain_name)
-            temp_domain_deletion_code, _ = get_code_and_message(response)
-
-            if temp_domain_deletion_code not in (1000, 1001):
-                raise RuntimeError("Could not delete temp domain")
-
-            return result, message
-
-        except Exception as ex:
-            return False, f"An exception occurred: {ex}"
-
+    @test_with_name("test_domain_create_unimplemented_object_service")
+    @expect(2307, "You do not have access to registration in this public domain")
     def test_domain_create_unimplemented_object_service(self):
-        expected_code = 2307
-        expected_reason = "You do not have access to registration in this public domain"
+        domain_name = generate_random_name(10, suffix=".ua")
 
+        response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0], [])
 
-        try:
-            domain_name = generate_domain_name(suffix=".ua")
+        self.domains_to_delete.append(domain_name)
 
-            response = self.client.domain_create(domain_name, 1, [], self.temp_contact, [])
+        return response
 
-            result, message = self.validate_code_and_reason(response, expected_code, expected_reason)
+    @test_with_name("test_domain_create_no_registrant")
+    @expect(2001,
+            "Element '{http://hostmaster.ua/epp/domain-1.1}registrant': [facet 'minLength'] The value has a length of '0'; this underruns the allowed minimum length of '3'.")
+    def test_domain_create_no_registrant(self):
+        domain_name = generate_random_name(10, suffix=".epp.ua")
 
-            if not result:
-                self.client.domain_delete(domain_name)
+        response = self.client.domain_create(domain_name, 1, [], "", [])
 
-            return result, message
+        self.domains_to_delete.append(domain_name)
 
+        return response
 
-        except Exception as ex:
-            return False, f"An exception occurred: {ex}"
+    @test_with_name("test_domain_create_contact_not_exists")
+    @expect(2303, "incorrect element registrant")
+    def test_domain_create_contact_not_exists(self):
+        domain_name = generate_random_name(10, suffix=".epp.ua")
 
+        test_contact = try_until_success(self.get_non_existing_contact, lambda name: name is not None)
 
-    def test_domain_create_command_syntax_error(self):
-        expected_code = 2001
-        expected_reason = "Element '{http://hostmaster.ua/epp/domain-1.1}registrant': [facet 'minLength'] The value has a length of '0'; this underruns the allowed minimum length of '3'."
+        response = self.client.domain_create(domain_name, 1, [], test_contact, [])
 
-        try:
-            domain_name = generate_domain_name()
+        self.domains_to_delete.append(domain_name)
 
-            response = self.client.domain_create(domain_name, 1, [], "", [])
+        return response
 
-            result, message = self.validate_code_and_reason(response, expected_code, expected_reason)
-
-            if not result:
-                self.client.domain_delete(domain_name)
-
-            return result, message
-
-        except Exception as ex:
-            return False, f"An exception occurred: {ex}"
-
-    def test_domain_create_object_not_exists(self):
-        expected_code = 2303
-        expected_reason = "incorrect element registrant"
-
-
-        try:
-            domain_name = generate_domain_name()
-
-            test_contact = self.get_non_existing_contact()
-
-            response = self.client.domain_create(domain_name, 1, [], test_contact, [])
-            result, message = self.validate_code_and_reason(response, expected_code, expected_reason)
-
-            if not result:
-                self.client.domain_delete(domain_name)
-
-            return result, message
-
-        except Exception as ex:
-            return False, f"An exception occurred: {ex}"
-
+    @test_with_name("test_domain_create_too_many_contacts")
+    @expect(2001,
+            "Element \'{http://hostmaster.ua/epp/domain-1.1}contact\': This element is not expected. Expected is ( {http://hostmaster.ua/epp/domain-1.1}authInfo ).")
     def test_domain_create_too_many_contacts(self):
-        expected_code = 2001
-        expected_reason = ""
+        # creating temp contacts
+        contact_list = [self.safe_create_contact() for _ in range(6)]
 
-        try:
+        domain_name = generate_random_name(10, suffix=".epp.ua")
 
-            # creating temp contacts
-            contact_list = [self.safe_create_contact() for _ in range(6)]
+        response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0],
+                                             [("admin", contact) for contact in contact_list] +
+                                             [("tech", contact) for contact in contact_list] +
+                                             [("billing", contact) for contact in contact_list])
 
-            domain_name = generate_domain_name()
+        self.domains_to_delete.append(domain_name)
 
-            response = self.client.domain_create(domain_name, 1, [], self.perm_contact,
-                                                 [("admin", contact) for contact in contact_list] +
-                                                 [("tech", contact) for contact in contact_list] +
-                                                 [("billing", contact) for contact in contact_list])
+        self.contacts_to_delete.extend(contact_list)
 
-            result, message = self.validate_code_and_reason(response, expected_code, expected_reason)
+        return response
 
-            if not result:
-                self.client.domain_delete(domain_name)
+    @test_with_name("test_domain_create_too_many_same_type_contacts")
+    @expect(2001, "Contacts limit exceeded: admin")
+    def test_domain_create_too_many_same_type_contacts(self):
+        # creating temp contacts
+        contact_list = [self.safe_create_contact() for _ in range(9)]
 
-            # Always try to delete contacts, even if deletion might fail
-            for contact in contact_list:
-                response = self.client.contact_delete(contact)
-                code = get_code_and_message(response)[0]
-                if code not in (1000, 1001, 2304):  # 2304 = Object not found
-                    raise RuntimeError(f"Could not delete contact ({contact}), code: {code}")
+        domain_name = generate_random_name(10, suffix=".epp.ua")
 
-            return result, message
+        response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0],
+                                             [("admin", contact) for contact in contact_list])
 
-        except Exception as ex:
-            return False, f"An exception occurred: {ex}"
+        self.domains_to_delete.append(domain_name)
+
+        self.contacts_to_delete.extend(contact_list)
+
+        return response
+
+    @test_with_name("test_domain_create_same_type_same_contacts")
+    @expect(2005, "Field duplicates domain:contact")
+    def test_domain_create_same_type_same_contacts(self):
+        domain_name = generate_random_name(10, suffix=".epp.ua")
+
+        response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0],
+                                             [("admin", self.perm_contacts[0]), ("admin", self.perm_contacts[0])])
+
+        self.domains_to_delete.append(domain_name)
+
+        return response
+
+    @test_with_name("test_domain_create_host_not_exist")
+    @expect(2303, "incorrect element domain:hostObj")
+    def test_domain_create_host_not_exist(self):
+        domain_name = generate_random_name(10, suffix=".epp.ua")
+
+        non_existing_host = self.get_non_existing_host()
+
+        response = self.client.domain_create(domain_name, 1, [non_existing_host], self.perm_contacts[0], [])
+
+        self.domains_to_delete.append(domain_name)
+
+        return response
+
+    @test_with_name("test_domain_create_bad_hostAttr")
+    @expect(2005, "incorrect element domain:hostObj")
+    def test_domain_create_bad_hostAttr(self):
+        domain_name = generate_random_name(10, suffix=".epp.ua")
+
+        invalid_host_name = "2sd@!!"
+        response = self.client.domain_create(domain_name, 1, [invalid_host_name], self.perm_contacts[0], [])
+
+        self.domains_to_delete.append(domain_name)
+
+        return response
+
+    # @test_name("test_domain_create_same_hosts")
+    # @expect(2005, "")
+    # def test_domain_create_same_hosts(self):
+    #     # host_name = self.safe_create_host()
+    #     domain_name=self.get_non_existing_domain()
+    #     self.client.domain_create(domain_name,1,[],self.perm_contacts[0],[])
+    #     response = self.client.domain_create("mx1."+domain_name, 1, [(domain_name,{"v4":"1.2.1.1"})], self.perm_contacts[0], [])
+    #
+    #     # self.domains_to_delete.append(domain_name)
+    #
+    #     return response
+
+    @test_with_name("test_domain_create_too_many_hosts")
+    @expect(2001, "Element \'{http://hostmaster.ua/epp/domain-1.1}hostObj\': This element is not expected.")
+    def test_domain_create_too_many_hosts(self):
+        domain_name=self.get_non_existing_domain()
+
+        response = self.client.domain_create(domain_name, 1, [host for host in self.perm_hosts], self.perm_contacts[0], [])
+
+        self.domains_to_delete.append(domain_name)
+
+        return response
+
+    @test_with_name("test_domain_create_too_many_hosts")
+    @expect(2004, "Period exceeded the maximum value")
+    def test_domain_create_too_big_period(self):
+        domain_name=self.get_non_existing_domain()
+
+        response = self.client.domain_create(domain_name, 12, [], self.perm_contacts[0], [])
+
+        self.domains_to_delete.append(domain_name)
+
+        return response
+
+def generate_random_name(length, suffix=""):
+    return "".join(random.choice(string.ascii_lowercase) for _ in range(length)) + suffix
 
 
-def generate_domain_name(suffix=".epp.ua"):
-    return "".join(random.choice(string.ascii_lowercase) for _ in range(10)) + suffix
-
-
-def generate_contact_name():
-    return "".join(random.choice(string.ascii_lowercase) for _ in range(6))
+def try_until_success(create_func, check_success, tries=10, *args, **kwargs):
+    for _ in range(tries):
+        item = create_func(*args, **kwargs)
+        if check_success(item):
+            return item
+    raise RuntimeError("Max retries reached")
 
 
 def run_all_test():
-    tester = Tester(LOGIN, PASSWORD, CERTFILE, KEYFILE, PERMANENT_CONTACT_ID)
+    tester = Tester(LOGIN, PASSWORD, CERTFILE, KEYFILE, PERMANENT_CONTACTS, PERMANENT_HOSTS)
     print(tester.test_domain_create_invalid_name())
-    print(tester.test_domain_create_command_syntax_error())
+    print(tester.test_domain_create_no_registrant())
     print(tester.test_domain_create_object_exists())
-    print(tester.test_domain_create_object_not_exists())
+    print(tester.test_domain_create_contact_not_exists())
     print(tester.test_domain_create_unimplemented_object_service())
     print(tester.test_domain_create_too_many_contacts())
-    # tester.cleanup()
+    print(tester.test_domain_create_too_many_same_type_contacts())
+    print(tester.test_domain_create_same_type_same_contacts())
+    print(tester.test_domain_create_host_not_exist())
+    print(tester.test_domain_create_bad_hostAttr())
+    print(tester.test_domain_create_too_many_hosts())
+    print(tester.test_domain_create_too_big_period())
+    tester.cleanup()
 
 
 def main():
