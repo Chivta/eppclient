@@ -57,13 +57,13 @@ class Tester:
         self.perm_contacts: list = permanent_contacts
 
         self._check_or_create_permanent_hosts(permanent_hosts)
-        self.perm_hosts = permanent_hosts
+        self.perm_hosts: list = permanent_hosts
 
         self.domains_to_delete = []
         self.contacts_to_delete = []
         self.hosts_to_delete = []
 
-    def _check_or_create_permanent_hosts(self,hosts: list):
+    def _check_or_create_permanent_hosts(self, hosts: list):
         for host in hosts:
             response = self.client.host_check([host])
 
@@ -110,7 +110,7 @@ class Tester:
             raise RuntimeError(f"Could not logout:  " + message)
 
     def safe_create_contact(self):
-        name = self.get_non_existing_contact()
+        name = self.get_available_contact_name()
         response = self.client.contact_create(name)
         if get_code(response) != 1000:
             raise RuntimeError(f'Could not create "{name}" contact')
@@ -118,7 +118,7 @@ class Tester:
 
 
     def safe_create_host(self, suffix=".epp.ua"):
-        name = self.get_non_existing_domain(suffix)
+        name = self.get_available_domain_name(suffix)
         response = self.client.domain_create(name,1,[],self.perm_contacts[0],[])
         if get_code(response) != 1000:
             raise RuntimeError(f'Could not create "{name}" domain')
@@ -129,19 +129,19 @@ class Tester:
         return name
 
 
-    def get_non_existing_contact(self):
+    def get_available_contact_name(self):
         return try_until_success(
             generate_random_name,
             lambda name: f'<contact:reason>Object exists</contact:reason>' not in self.client.contact_check(name),
             length=10)
 
-    def get_non_existing_host(self, suffix=".epp.ua"):
+    def get_available_host_name(self, suffix=".epp.ua"):
         return try_until_success(
             generate_random_name,
             lambda name: f'<host:reason>Object exists</host:reason>' not in self.client.host_check(name),
             length=10,suffix=suffix)
 
-    def get_non_existing_domain(self, suffix=".epp.ua"):
+    def get_available_domain_name(self, suffix=".epp.ua"):
         return try_until_success(
             generate_random_name,
             lambda name: f'<domain:reason>Object exists</domain:reason>' not in self.client.domain_check(name),
@@ -150,7 +150,7 @@ class Tester:
     @test_with_name("test_domain_create_invalid_name")
     @expect(2005, "Incorrect domain name")
     def test_domain_create_invalid_name(self) -> tuple[bool, str]:
-        domain_name = generate_random_name(10, suffix=".com")
+        domain_name = self.get_available_domain_name(suffix=".com")
 
         response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0], [])
 
@@ -161,7 +161,7 @@ class Tester:
     @test_with_name("test_domain_create_object_exists")
     @expect(2302, "Object exists")
     def test_domain_create_object_exists(self) -> tuple[bool, str]:
-        temp_domain_name = self.get_non_existing_domain()
+        temp_domain_name = self.get_available_domain_name()
         self.client.domain_create(temp_domain_name,1,[],self.perm_contacts[0],[])
         self.domains_to_delete.append(temp_domain_name)
 
@@ -173,7 +173,7 @@ class Tester:
     @test_with_name("test_domain_create_unimplemented_object_service")
     @expect(2307, "You do not have access to registration in this public domain")
     def test_domain_create_unimplemented_object_service(self):
-        domain_name = generate_random_name(10, suffix=".ua")
+        domain_name = self.get_available_domain_name(suffix=".ua")
 
         response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0], [])
 
@@ -185,7 +185,7 @@ class Tester:
     @expect(2001,
             "Element '{http://hostmaster.ua/epp/domain-1.1}registrant': [facet 'minLength'] The value has a length of '0'; this underruns the allowed minimum length of '3'.")
     def test_domain_create_no_registrant(self):
-        domain_name = generate_random_name(10, suffix=".epp.ua")
+        domain_name = self.get_available_domain_name()
 
         response = self.client.domain_create(domain_name, 1, [], "", [])
 
@@ -196,9 +196,9 @@ class Tester:
     @test_with_name("test_domain_create_contact_not_exists")
     @expect(2303, "incorrect element registrant")
     def test_domain_create_contact_not_exists(self):
-        domain_name = generate_random_name(10, suffix=".epp.ua")
+        domain_name = self.get_available_domain_name()
 
-        test_contact = try_until_success(self.get_non_existing_contact, lambda name: name is not None)
+        test_contact = try_until_success(self.get_available_contact_name, lambda name: name is not None)
 
         response = self.client.domain_create(domain_name, 1, [], test_contact, [])
 
@@ -211,42 +211,33 @@ class Tester:
             "Element \'{http://hostmaster.ua/epp/domain-1.1}contact\': This element is not expected. Expected is ( {http://hostmaster.ua/epp/domain-1.1}authInfo ).")
     def test_domain_create_too_many_contacts(self):
         # creating temp contacts
-        contact_list = [self.safe_create_contact() for _ in range(6)]
-
-        domain_name = generate_random_name(10, suffix=".epp.ua")
+        domain_name = self.get_available_domain_name()
 
         response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0],
-                                             [("admin", contact) for contact in contact_list] +
-                                             [("tech", contact) for contact in contact_list] +
-                                             [("billing", contact) for contact in contact_list])
+                                             [("admin", contact) for contact in self.perm_contacts[:7]] +
+                                             [("tech", contact) for contact in self.perm_contacts[:7]] +
+                                             [("billing", contact) for contact in self.perm_contacts[:7]])
 
         self.domains_to_delete.append(domain_name)
-
-        self.contacts_to_delete.extend(contact_list)
 
         return response
 
     @test_with_name("test_domain_create_too_many_same_type_contacts")
     @expect(2001, "Contacts limit exceeded: admin")
     def test_domain_create_too_many_same_type_contacts(self):
-        # creating temp contacts
-        contact_list = [self.safe_create_contact() for _ in range(9)]
-
-        domain_name = generate_random_name(10, suffix=".epp.ua")
+        domain_name = self.get_available_domain_name()
 
         response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0],
-                                             [("admin", contact) for contact in contact_list])
+                                             [("admin", contact) for contact in self.perm_contacts])
 
         self.domains_to_delete.append(domain_name)
-
-        self.contacts_to_delete.extend(contact_list)
 
         return response
 
     @test_with_name("test_domain_create_same_type_same_contacts")
     @expect(2005, "Field duplicates domain:contact")
     def test_domain_create_same_type_same_contacts(self):
-        domain_name = generate_random_name(10, suffix=".epp.ua")
+        domain_name = self.get_available_domain_name()
 
         response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0],
                                              [("admin", self.perm_contacts[0]), ("admin", self.perm_contacts[0])])
@@ -258,9 +249,9 @@ class Tester:
     @test_with_name("test_domain_create_host_not_exist")
     @expect(2303, "incorrect element domain:hostObj")
     def test_domain_create_host_not_exist(self):
-        domain_name = generate_random_name(10, suffix=".epp.ua")
+        domain_name = self.get_available_domain_name()
 
-        non_existing_host = self.get_non_existing_host()
+        non_existing_host = self.get_available_host_name()
 
         response = self.client.domain_create(domain_name, 1, [non_existing_host], self.perm_contacts[0], [])
 
@@ -271,7 +262,7 @@ class Tester:
     @test_with_name("test_domain_create_bad_hostAttr")
     @expect(2005, "incorrect element domain:hostObj")
     def test_domain_create_bad_hostAttr(self):
-        domain_name = generate_random_name(10, suffix=".epp.ua")
+        domain_name = self.get_available_domain_name()
 
         invalid_host_name = "2sd@!!"
         response = self.client.domain_create(domain_name, 1, [invalid_host_name], self.perm_contacts[0], [])
@@ -295,7 +286,7 @@ class Tester:
     @test_with_name("test_domain_create_too_many_hosts")
     @expect(2001, "Element \'{http://hostmaster.ua/epp/domain-1.1}hostObj\': This element is not expected.")
     def test_domain_create_too_many_hosts(self):
-        domain_name=self.get_non_existing_domain()
+        domain_name=self.get_available_domain_name()
 
         response = self.client.domain_create(domain_name, 1, [host for host in self.perm_hosts], self.perm_contacts[0], [])
 
@@ -306,7 +297,7 @@ class Tester:
     @test_with_name("test_domain_create_too_many_hosts")
     @expect(2004, "Period exceeded the maximum value")
     def test_domain_create_too_big_period(self):
-        domain_name=self.get_non_existing_domain()
+        domain_name=self.get_available_domain_name()
 
         response = self.client.domain_create(domain_name, 12, [], self.perm_contacts[0], [])
 
