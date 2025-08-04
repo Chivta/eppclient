@@ -85,3 +85,15 @@ def validate_code_and_reason(response, expected_code, expected_reason):
         return False, "Expected reason: " + expected_reason + " instead got: " + reason
 
     return False, message
+
+
+def get_exp_date(xml_string):
+    try:
+        root = ET.fromstring(xml_string)
+        exp_date = root.find(".//domain:exDate", namespaces=NAMESPACES)
+        if exp_date is None:
+            return None
+        return exp_date.text
+
+    except ET.ParseError:
+        return None

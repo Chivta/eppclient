@@ -47,6 +47,11 @@ class EPPClient:
         response = self.stream.exchange_messages(request)
         return response
 
+    def domain_renew(self, domain: str, cur_exp_date: str, period: int):
+        request = XMLGenerator.domain_renew(domain, cur_exp_date, period)
+        response = self.stream.exchange_messages(request)
+        return response
+
     def host_check(self, hosts):
         request = XMLGenerator.host_check(hosts)
         response = self.stream.exchange_messages(request)

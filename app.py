@@ -7,12 +7,22 @@ from EPPServerConnection import EPPServerConnection
 from EPPClient import EPPClient
 
 # creating a socket and wrapping in into a tls context
-connection = EPPServerConnection(HOST, PORT, CERTFILE, KEYFILE)
+try:
+    connection = EPPServerConnection(HOST, PORT, CERTFILE, KEYFILE)
+except FileNotFoundError:
+    print("Add client.key and client.pem files with private key and certificate respectively")
+    exit()
+except SSLError:
+    print("Key does not match the certificate")
+    exit()
 
 epp_stream = EPPStream(connection)
 
 epp_client = EPPClient(epp_stream)
 
+if LOGIN=="" or PASSWORD=="":
+    print("Enter client id and password in config.py file")
+    exit()
 
 data = {
     "cl_id": LOGIN,
@@ -46,19 +56,6 @@ def main():
         print()
 
 # ===  DOMAIN MENU  ===
-
-def domain_menu():
-    while True:
-        print("1. Domain check\n2. Domain info\n3. Domain create\n4. Domain delete\n5. Exit")
-        choice = input("Choose an option: ").strip()
-        action = domain_menu_actions.get(choice)
-        if action:
-            action()
-        elif choice == "5":
-            return
-        else:
-            print("Invalid choice.")
-        print()
 
 def domain_create():
     print("=== Creating a domain ===")
@@ -137,12 +134,59 @@ def domain_delete():
 
     parse_domain_delete_response(response)
 
+def domain_renew():
+    print("=== Domain renew ===")
+    domain = input("Enter domain name: ")
+    response = epp_client.domain_info(domain)
+
+    exp_date = get_exp_date(response)
+    if exp_date is None:
+        print("Domain does not exist")
+    exp_date = exp_date[:10]
+    print(f"Domain has expire date \"{exp_date}\"")
+
+    new_period = input("Enter how many years to extend the domain’s expiration date: ")
+
+    if not new_period.isdigit():
+        print("Invalid period input")
+        return
+
+    response = epp_client.domain_renew(domain, exp_date, int(new_period))
+
+    parse_domain_renew_response(response)
+
+
 domain_menu_actions = {
     "1": domain_check,
     "2": domain_info,
     "3": domain_create,
-    "4": domain_delete
+    "4": domain_delete,
+    "5": domain_renew,
+    # "6": domain_transfer,
+    # "7": domain_update,
+    # "8": domain_restore,
 }
+
+def domain_menu():
+    while True:
+        print("1. Domain check\n"
+              "2. Domain info\n"
+              "3. Domain create\n"
+              "4. Domain delete\n"
+              "5. Domain renew\n"
+              "6. Domain transfer\n"
+              "7. Domain update\n"
+              "8. Domain restore"
+              )
+        choice = input("Choose an option: ").strip()
+        action = domain_menu_actions.get(choice)
+        if action:
+            action()
+        elif choice == len(domain_menu_actions)+1:
+            return
+        else:
+            print("Invalid choice.")
+        print()
 
 # ===  HOST MENU  ===
 def host_menu():

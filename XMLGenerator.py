@@ -203,3 +203,16 @@ def host_info(name) -> str:
        </host:info>
      </info>
    </command>''')
+
+def domain_renew(name: str, cur_exp_date: str, period: int) -> str:
+    return wrap_in_epp_element(f'''
+    <command>
+      <renew>
+        <domain:renew xmlns:domain="{NAMESPACES["domain"]}">
+          <domain:name>{name}</domain:name>
+          <domain:curExpDate>{cur_exp_date}</domain:curExpDate>
+          <domain:period unit="y">{period}</domain:period>
+        </domain:renew>
+      </renew>
+    </command>
+''')

@@ -84,3 +84,27 @@ def parse_domain_delete_response(xml_response):
     root = ET.fromstring(xml_response)
     # Parse result
     parse_result_element(root)
+
+def parse_domain_renew_response(xml_string):
+    root = ET.fromstring(xml_string)
+
+    # Parse result code and message
+    code = parse_result_element(root)
+
+    if code == "1000":
+        ren_data = root.find('.//domain:renData', NAMESPACES)
+        if ren_data is not None:
+            name = ren_data.findtext('domain:name', default='N/A', namespaces=NAMESPACES)
+            ex_date = ren_data.findtext('domain:exDate', default='N/A', namespaces=NAMESPACES)
+            print(f"[*] Domain Renewed: {name}")
+            print(f"[*] New Expiration Date: {ex_date}")
+        else:
+            print("[!] No <domain:renData> found in successful response.")
+    else:
+        ext_value = root.find('.//epp:extValue', NAMESPACES)
+        if ext_value is not None:
+            reason_elem = ext_value.find('epp:reason', NAMESPACES)
+            reason = reason_elem.text if reason_elem is not None else "Unknown reason"
+            print(f"[!] Error Reason: {reason}")
+        else:
+            print("[!] No <extValue> provided with the error.")
