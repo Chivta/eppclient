@@ -3,7 +3,9 @@ from xml.etree.ElementTree import Element
 
 from config import NAMESPACES
 
-def parse_result_element(root: Element) -> str:
+def parse_result_element(root: Element|str) -> str:
+    if type(root) == str:
+        root = ET.fromstring(root)
     result = root.find('.//epp:result', NAMESPACES)
     if result is not None:
         code = result.attrib.get('code')
@@ -97,3 +99,7 @@ def get_exp_date(xml_string):
 
     except ET.ParseError:
         return None
+
+def domain_exists(domain_info: str) -> bool:
+    root = ET.fromstring(domain_info)
+    return

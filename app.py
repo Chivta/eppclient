@@ -1,5 +1,8 @@
+from ssl import SSLError
+
 from EPPStream import EPPStream
 from config import *
+from general_func import get_exp_date, save_response
 from response_parsers.domain import *
 from response_parsers.host import *
 from response_parsers.contact import *
@@ -74,15 +77,21 @@ def domain_create():
 def get_nameservers():
     print("Adding name servers")
     res = []
+    usr_inp = input("1. Add existing host 2. Add new host 3. Stop adding name servers ")
     while len(res) <= 10:
-        usr_inp = input("1. Add existing host 2. Add new host 3. Stop adding name servers ")
         if usr_inp == "1":
-            res.append(input("Enter host name: "))
+            host_name = input("Enter host name or empty line to stop: ")
+            if host_name:
+                res.append(host_name)
+            else:
+                break
         elif usr_inp == "2":
-            name = input("Enter host name: ")
+            host_name = input("Enter host name or empty line to stop: ")
+            if not host_name:
+                break
             ipv4 = input("Enter ipv4 or empty line for none: ")
             ipv6 = input("Enter ipv6 or empty line for none: ")
-            res.append((name,{"v4":ipv4,"v6":ipv6}))
+            res.append((host_name,{"v4":ipv4,"v6":ipv6}))
         elif usr_inp == "" or usr_inp == "3":
             break
 
@@ -156,15 +165,38 @@ def domain_renew():
     parse_domain_renew_response(response)
 
 
+def domain_update():
+    print("=== Domain update ===")
+    domain = input("Enter domain name: ")
+    add = {}
+    rem = {}
+    chg = {}
+    usr_choice = input("Add something to domain? (y/n)").replace("n", "")
+    if usr_choice:
+        add["hosts"] = get_nameservers()
+        add["contacts"] = get_contacts()
+    usr_choice = input("Remove something from domain? (y/n)").replace("n", "")
+    if usr_choice:
+        rem["hosts"] = get_nameservers()
+        rem["contacts"] = get_contacts()
+    usr_choice = input("Change registrant? (y/n)").replace("n", "")
+    if usr_choice:
+        usr_input = input("New registrant: ")
+        if usr_input:
+            chg["registrant"] = usr_input
+
+    response = epp_client.domain_update(domain,add,rem,chg)
+    parse_result_element(response)
+
+
 domain_menu_actions = {
     "1": domain_check,
     "2": domain_info,
     "3": domain_create,
     "4": domain_delete,
     "5": domain_renew,
-    # "6": domain_transfer,
-    # "7": domain_update,
-    # "8": domain_restore,
+    "6": domain_update,
+    # "7": domain_restore,
 }
 
 def domain_menu():
@@ -174,9 +206,8 @@ def domain_menu():
               "3. Domain create\n"
               "4. Domain delete\n"
               "5. Domain renew\n"
-              "6. Domain transfer\n"
-              "7. Domain update\n"
-              "8. Domain restore"
+              "6. Domain update\n"
+              "7. Domain restore"
               )
         choice = input("Choose an option: ").strip()
         action = domain_menu_actions.get(choice)

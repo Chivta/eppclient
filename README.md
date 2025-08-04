@@ -10,6 +10,8 @@ Clone the repo and fill config file with your login and password. Then add clien
 - `domain:info`  
 - `domain:create`  
 - `domain:delete`  
+- `domain:renew`  
+- `domain:update`  
 ### Host Operations
 - `host:check`  
 - `host:info`  

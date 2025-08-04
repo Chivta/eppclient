@@ -93,10 +93,13 @@ def domain_create(name : str, period : int, ns:list[str|tuple[str,dict[str:str]]
           <domain:period unit="y">{period}</domain:period>
             {build_hosts(ns)}
           <domain:registrant>{registrant}</domain:registrant>
-          {"\n".join(f'<domain:contact type="{type_}">{text}</domain:contact>' for type_, text in contacts)}
+          {build_contacts(contacts)}
         </domain:create>
       </create>
     </command>''')
+
+def build_contacts(contacts : list[tuple[str, str]]):
+    return "\n".join(f'<domain:contact type="{type_}">{text}</domain:contact>' for type_, text in contacts)
 
 def host_check(hosts) -> str:
     return wrap_in_epp_element(f'''
@@ -216,3 +219,37 @@ def domain_renew(name: str, cur_exp_date: str, period: int) -> str:
       </renew>
     </command>
 ''')
+
+def build_add(add:dict[str:list]):
+    return f'''
+    <domain:add>
+        {build_hosts(add["hosts"])}
+        {build_contacts(add["contacts"])}
+    </domain:add>''' if add else ""
+
+def build_rem(rem:dict[str:list]):
+    return f'''
+    <domain:add>
+        {build_hosts(rem["hosts"])}
+        {build_contacts(rem["contacts"])}
+    </domain:add>''' if rem else ""
+
+def build_chg(chg:dict[str:list]):
+    return f'''
+    <domain:chg>
+          <domain:registrant>{chg["registrant"]}</domain:registrant>
+    </domain:chg>''' if chg else ""
+
+def domain_update(domain: str, add:dict[str:list],rem:dict[str:list],chg:dict[str:list]) -> str:
+    return wrap_in_epp_element(f'''
+    <command>
+      <update>
+        <domain:update
+         xmlns:domain="{NAMESPACES["domain"]}">
+          <domain:name>{domain}</domain:name>
+          {build_add(add)}
+          {build_rem(rem)}
+          {build_chg(chg)}
+        </domain:update>
+      </update>
+    </command>''')

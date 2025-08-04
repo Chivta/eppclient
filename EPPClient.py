@@ -52,6 +52,11 @@ class EPPClient:
         response = self.stream.exchange_messages(request)
         return response
 
+    def domain_update(self, domain: str, add:dict[str:list],rem:dict[str:list],chg:dict[str:list]):
+        request = XMLGenerator.domain_update(domain,add,rem,chg)
+        response = self.stream.exchange_messages(request)
+        return response
+
     def host_check(self, hosts):
         request = XMLGenerator.host_check(hosts)
         response = self.stream.exchange_messages(request)
