@@ -207,6 +207,23 @@ def host_info(name) -> str:
      </info>
    </command>''')
 
+def host_update(name, add, rem: dict):
+    return wrap_in_epp_element(f'''
+   <command>
+     <update>
+       <host:update xmlns:host="{NAMESPACES["host"]}">
+         <host:name>{name}</host:name>
+         {f"""<host:add>
+           {"\n".join([f'<host:addr ip="{v}">{adr}</host:addr>' for v, adr in add["ip"].items() if adr])}
+         </host:add>""" if add["ip"] else ""}
+         {f"""<host:rem>
+           {"\n".join([f'<host:addr ip="{v}">{adr}</host:addr>' for v, adr in rem["ip"].items() if adr])}
+         </host:rem>""" if rem.get("ip") else ""}
+       </host:update>
+     </update>
+   </command>''')
+
+
 def domain_renew(name: str, cur_exp_date: str, period: int) -> str:
     return wrap_in_epp_element(f'''
     <command>

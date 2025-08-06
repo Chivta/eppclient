@@ -89,13 +89,17 @@ def get_nameservers():
             host_name = input("Enter host name or empty line to stop: ")
             if not host_name:
                 break
-            ipv4 = input("Enter ipv4 or empty line for none: ")
-            ipv6 = input("Enter ipv6 or empty line for none: ")
-            res.append((host_name,{"v4":ipv4,"v6":ipv6}))
+            res.append((host_name,get_ip()))
         elif usr_inp == "" or usr_inp == "3":
             break
 
     return res
+
+
+def get_ip() -> dict[str:str]:
+    ipv4 = input("Enter ipv4 or empty line for none: ")
+    ipv6 = input("Enter ipv6 or empty line for none: ")
+    return {"v4": ipv4, "v6": ipv6}
 
 
 def get_contacts():
@@ -222,7 +226,7 @@ def domain_menu():
 # ===  HOST MENU  ===
 def host_menu():
     while True:
-        print("1. Host check\n2. Host info\n3. Host create\n4. Exit")
+        print("1. Host check\n2. Host info\n3. Host create\n4. Host update\n5. Exit")
         choice = input("Choose an option: ").strip()
         action = host_menu_actions.get(choice)
         if action:
@@ -267,10 +271,26 @@ def host_info():
     parse_host_info_response(response)
 
 
+def host_update():
+    print("=== Host Update ===")
+    name = input("Enter host name: ")
+    add = {}
+    rem = {}
+    usr_choice = input("Add ip-addresses to host? (y/n)").replace("n", "")
+    if usr_choice:
+        add["ip"] = get_ip()
+    usr_choice = input("Remove ip-addresses from host? (y/n)").replace("n", "")
+    if usr_choice:
+        rem["ip"] = get_ip()
+    response = epp_client.host_update(name, add, rem)
+
+    parse_result_element(response)
+
 host_menu_actions = {
     "1":host_check,
     "2":host_info,
     "3":host_create,
+    "4":host_update
 }
 
 # ===  CONTACT MENU  ===

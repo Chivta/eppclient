@@ -17,6 +17,7 @@ Clone the repo and fill config file with your login and password. Then add clien
 - `host:info`  
 - `host:create`  
 - `host:delete`  
+- `host:update`  
 ### Contact Operations
 - `contact:check`
 - `contact:info`  

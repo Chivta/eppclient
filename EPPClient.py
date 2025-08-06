@@ -77,6 +77,11 @@ class EPPClient:
         response = self.stream.exchange_messages(request)
         return response
 
+    def host_update(self, name, add:dict[str:list], rem:dict[str:list]):
+        request = XMLGenerator.host_update(name, add, rem)
+        response = self.stream.exchange_messages(request)
+        return response
+
     def contact_info(self, contacts):
         request = XMLGenerator.contact_info(contacts)
         response = self.stream.exchange_messages(request)
