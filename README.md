@@ -23,5 +23,6 @@ Clone the repo and fill config file with your login and password. Then add clien
 - `contact:info`  
 - `contact:create`  
 - `contact:delete`  
+- `contact:update`  
 
 Each operation parses the EPP XML server response and prints a readable summary to the console.

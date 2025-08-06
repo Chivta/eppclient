@@ -145,19 +145,24 @@ def host_create(name:str,ipv4:str,ipv6:str) -> str:
    </command>''')
 
 
+def contact_build_post_info(name, city, cc):
+    return f'''
+    <contact:postalInfo type="int">
+      {f"<contact:name>{name}</contact:name>" if name else ""}
+      {f"""<contact:addr>
+        {f"<contact:city>{city}</contact:city>" if city else ""}
+        {f"<contact:cc>{cc}</contact:cc>" if cc else ""}
+      </contact:addr>""" if city or cc else ""}
+    </contact:postalInfo>''' if name or city or cc else ""
+
+
 def contact_create(contact_id, name, city, country_code, email, password) -> str:
     return wrap_in_epp_element(f'''
     <command>
         <create>
           <contact:create xmlns:contact="{NAMESPACES["contact"]}">
             <contact:id>{contact_id}</contact:id>
-            <contact:postalInfo type="int">
-              <contact:name>{name}</contact:name>
-              <contact:addr>
-                <contact:city>{city}</contact:city>
-                <contact:cc>{country_code}</contact:cc>
-              </contact:addr>
-            </contact:postalInfo>
+            {contact_build_post_info(name,city,country_code)}
             <contact:email>{email}</contact:email>
             <contact:authInfo>
               <contact:pw>{password}</contact:pw>
@@ -240,8 +245,8 @@ def domain_renew(name: str, cur_exp_date: str, period: int) -> str:
 def build_add(add:dict[str:list]):
     return f'''
     <domain:add>
-        {build_hosts(add["hosts"])}
-        {build_contacts(add["contacts"])}
+        {build_hosts(add.get("hosts"))}
+        {build_contacts(add.get("contacts"))}
     </domain:add>''' if add else ""
 
 def build_rem(rem:dict[str:list]):
@@ -270,3 +275,23 @@ def domain_update(domain: str, add:dict[str:list],rem:dict[str:list],chg:dict[st
         </domain:update>
       </update>
     </command>''')
+
+def build_contact_chg(name,city,cc,email,password):
+    return f'''
+    <contact:chg>
+       {contact_build_post_info(name,city,cc)}
+        {f"<contact:email>{email}</contact:email>" if email else ""}
+        {f"""<contact:authInfo>
+          <contact:pw>{password}</contact:pw>
+        </contact:authInfo>""" if password else ""}  
+    </contact:chg>'''
+
+def contact_update(contact_id, add, rem, chg):
+    return wrap_in_epp_element(f'''<command>
+     <update>
+       <contact:update xmlns:contact="{NAMESPACES["contact"]}">
+         <contact:id>{contact_id}</contact:id>
+         {build_contact_chg(chg.get("name"),chg.get("city"),chg.get("cc"),chg.get("email"),chg.get("password"))}
+       </contact:update>
+     </update>
+   </command>''')
