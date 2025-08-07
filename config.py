@@ -9,8 +9,9 @@ NAMESPACES = {
     'rgp':"http://hostmaster.ua/epp/rgp-1.1"
 }
 
-PERMANENT_CONTACTS = ["permanent-1","permanent-2","permanent-3","permanent-4","permanent-5","permanent-6","permanent-7","permanent-8","permanent-9"]
-PERMANENT_HOSTS = ["host-1.epp.ua","host-2.epp.ua","host-3.epp.ua","host-4.epp.ua","host-5.epp.ua","host-6.epp.ua","host-7.epp.ua","host-8.epp.ua","host-9.epp.ua","host-10.epp.ua","host-11.epp.ua","host-12.epp.ua","host-13.epp.ua","host-14.epp.ua"]
+PERMANENT_DOMAINS = ["test-dom1.epp.ua"]
+PERMANENT_CONTACTS = ["contact-1","contact-2","contact-3","contact-4","contact-5","contact-6","contact-7","contact-8","contact-9"]
+PERMANENT_HOSTS = ["ns1.test-dom1.epp.ua"]
 
 LOGIN = ""
 PASSWORD = ""

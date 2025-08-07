@@ -155,7 +155,6 @@ def domain_renew():
     exp_date = get_exp_date(response)
     if exp_date is None:
         print("Domain does not exist")
-    exp_date = exp_date[:10]
     print(f"Domain has expire date \"{exp_date}\"")
 
     new_period = input("Enter how many years to extend the domain’s expiration date: ")
@@ -219,7 +218,8 @@ def domain_menu():
               "4. Domain delete\n"
               "5. Domain renew\n"
               "6. Domain update\n"
-              "7. Exit"
+              "7. Domain restore\n"
+              "8. Exit"
               )
         choice = input("Choose an option: ").strip()
         action = domain_menu_actions.get(choice)
@@ -232,7 +232,12 @@ def domain_menu():
 # ===  HOST MENU  ===
 def host_menu():
     while True:
-        print("1. Host check\n2. Host info\n3. Host create\n4. Host update\n5. Exit")
+        print("1. Host check\n"
+              "2. Host info\n"
+              "3. Host create\n"
+              "4. Host update\n"
+              "5. Host delete\n"
+              "6. Exit")
         choice = input("Choose an option: ").strip()
         action = host_menu_actions.get(choice)
         if action:
@@ -290,11 +295,20 @@ def host_update():
 
     parse_result_element(response)
 
+def host_delete():
+    print("=== Host Delete ===")
+    name = input("Enter host name: ")
+
+    response = epp_client.host_delete(name)
+
+    parse_result_element(response)
+
 host_menu_actions = {
     "1":host_check,
     "2":host_info,
     "3":host_create,
-    "4":host_update
+    "4":host_update,
+    "5":host_delete
 }
 
 # ===  CONTACT MENU  ===

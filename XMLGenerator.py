@@ -99,7 +99,7 @@ def domain_create(name : str, period : int, ns:list[str|tuple[str,dict[str:str]]
     </command>''')
 
 def build_contacts(contacts : list[tuple[str, str]]):
-    return "\n".join(f'<domain:contact type="{type_}">{text}</domain:contact>' for type_, text in contacts)
+    return "\n".join(f'<domain:contact type="{type_}">{text}</domain:contact>' for type_, text in contacts) if contacts else ""
 
 def host_check(hosts) -> str:
     return wrap_in_epp_element(f'''
@@ -206,7 +206,7 @@ def host_info(name) -> str:
     return wrap_in_epp_element(f'''
     <command>
      <info>
-       <host:info xmlns:host="http://hostmaster.ua/epp/host-1.1">
+       <host:info xmlns:host="{NAMESPACES["host"]}">
          <host:name>{name}</host:name>
        </host:info>
      </info>

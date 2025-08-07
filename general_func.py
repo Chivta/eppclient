@@ -95,7 +95,7 @@ def get_exp_date(xml_string):
         exp_date = root.find(".//domain:exDate", namespaces=NAMESPACES)
         if exp_date is None:
             return None
-        return exp_date.text
+        return exp_date.text[:10]
 
     except ET.ParseError:
         return None
