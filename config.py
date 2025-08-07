@@ -5,7 +5,8 @@ NAMESPACES = {
     'epp': 'urn:ietf:params:xml:ns:epp-1.0',
     'domain': 'http://hostmaster.ua/epp/domain-1.1',
     'host': "http://hostmaster.ua/epp/host-1.1",
-    'contact':"http://hostmaster.ua/epp/contact-1.1"
+    'contact':"http://hostmaster.ua/epp/contact-1.1",
+    'rgp':"http://hostmaster.ua/epp/rgp-1.1"
 }
 
 PERMANENT_CONTACTS = ["permanent-1","permanent-2","permanent-3","permanent-4","permanent-5","permanent-6","permanent-7","permanent-8","permanent-9"]

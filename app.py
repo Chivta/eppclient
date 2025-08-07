@@ -55,7 +55,7 @@ def main():
         if action:
             action()
         else:
-            print("Invalid choice. Try again.")
+            print("Invalid option")
         print()
 
 # ===  DOMAIN MENU  ===
@@ -192,6 +192,14 @@ def domain_update():
     response = epp_client.domain_update(domain,add,rem,chg)
     parse_result_element(response)
 
+def domain_restore():
+    print("=== Domain restore ===")
+    domain = input("Enter domain name: ")
+
+    response = epp_client.domain_restore(domain)
+
+    parse_result_element(response)
+
 
 domain_menu_actions = {
     "1": domain_check,
@@ -200,7 +208,7 @@ domain_menu_actions = {
     "4": domain_delete,
     "5": domain_renew,
     "6": domain_update,
-    # "7": domain_restore,
+    "7": domain_restore
 }
 
 def domain_menu():
@@ -211,16 +219,14 @@ def domain_menu():
               "4. Domain delete\n"
               "5. Domain renew\n"
               "6. Domain update\n"
-              "7. Domain restore"
+              "7. Exit"
               )
         choice = input("Choose an option: ").strip()
         action = domain_menu_actions.get(choice)
         if action:
             action()
-        elif choice == len(domain_menu_actions)+1:
-            return
         else:
-            print("Invalid choice.")
+            return
         print()
 
 # ===  HOST MENU  ===
@@ -231,10 +237,8 @@ def host_menu():
         action = host_menu_actions.get(choice)
         if action:
             action()
-        elif choice == "4":
-            return
         else:
-            print("Invalid choice.\n")
+            return
         print()
 
 def host_check():
@@ -297,15 +301,18 @@ host_menu_actions = {
 
 def contact_menu():
     while True:
-        print("1. Contact check\n2. Contact info\n3. Contact create\n4. Contact delete\n5. Contact update\n6. Exit")
+        print("1. Contact check\n"
+              "2. Contact info\n"
+              "3. Contact create\n"
+              "4. Contact delete\n"
+              "5. Contact update\n"
+              "6. Exit")
         choice = input("Choose an option: ").strip()
         action = contact_menu_actions.get(choice)
         if action:
             action()
-        elif choice == len(contact_menu_actions) + 1:
-            return
         else:
-            print("Invalid choice.\n")
+            return
         print()
 
 def contact_check():

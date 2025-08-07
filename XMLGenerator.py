@@ -295,3 +295,20 @@ def contact_update(contact_id, add, rem, chg):
        </contact:update>
      </update>
    </command>''')
+
+def domain_restore(name):
+    return wrap_in_epp_element(f'''
+    <command>
+      <update>
+        <domain:update
+         xmlns:domain="{NAMESPACES["domain"]}">
+          <domain:name>{name}</domain:name>
+        </domain:update>
+      </update>
+      <extension>
+        <rgp:update
+         xmlns:rgp="{NAMESPACES["rgp"]}">
+          <rgp:restore op="request"/>
+        </rgp:update>
+      </extension>
+    </command>''')

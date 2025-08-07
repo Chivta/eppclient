@@ -57,6 +57,11 @@ class EPPClient:
         response = self.stream.exchange_messages(request)
         return response
 
+    def domain_restore(self, domain: str):
+        request = XMLGenerator.domain_restore(domain)
+        response = self.stream.exchange_messages(request)
+        return response
+
     def host_check(self, hosts):
         request = XMLGenerator.host_check(hosts)
         response = self.stream.exchange_messages(request)

@@ -12,6 +12,7 @@ Clone the repo and fill config file with your login and password. Then add clien
 - `domain:delete`  
 - `domain:renew`  
 - `domain:update`  
+- `domain:restore`  
 ### Host Operations
 - `host:check`  
 - `host:info`  
