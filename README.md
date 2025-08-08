@@ -1,7 +1,14 @@
 A simple console EPP client. It sends requests and prints a readable summary of server response to the console.
 
-## Running
-Clone the repo and fill config file with your login and password. Then add client.pem and client.key files with certificate and private key respectively. Then run the app.py file.
+## Setup
+Clone the repo and fill config file with your login and password. Then add client.pem and client.key files with certificate and private key respectively.
+
+## Running client
+Run app.py file.
+
+## Running tests
+Run test.py file.
+
 
 ## Supported commands:
 
