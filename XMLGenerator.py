@@ -295,10 +295,10 @@ def contact_update(contact_id, add, rem, chg):
          <contact:id>{contact_id}</contact:id>
          {f"""<contact:add>
            {'/n'.join(f'<contact:status s="{stat}"></contact:status>' for stat in add.get("statuses")) if add.get("statuses") else ""}
-         </contact:add>""" if len(add) else ""}
+         </contact:add>""" if add.get("statuses") else ""}
          {f"""<contact:rem>
            {'/n'.join(f'<contact:status s="{stat}"></contact:status>' for stat in rem.get("statuses")) if rem.get("statuses") else ""}
-         </contact:rem>""" if len(rem) else ""}
+         </contact:rem>""" if rem.get("statuses") else ""}
          {build_contact_chg(chg.get("name"),chg.get("city"),chg.get("cc"),chg.get("email"),chg.get("password"))}
        </contact:update>
      </update>

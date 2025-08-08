@@ -391,8 +391,8 @@ def contact_delete():
 def contact_update():
     print("=== Contact Update ===")
     contact_id = input("Enter contact id: ")
-    add = {}
-    rem = {}
+    add = {"statuses":[]}
+    rem = {"statuses":[]}
     chg = {}
     print("Enter contact new contact details if you want to change them or empty line to skip")
     chg["name"] = input("Enter contact name: ")
@@ -400,6 +400,22 @@ def contact_update():
     chg["cc"] = input("Enter country code: ")
     chg["email"] = input("Enter email: ")
     chg["password"] = input("Enter PASSWORD: ")
+
+    usr_choice = input("Add clientDeleteProhibited status? (y/n)").replace("n", "")
+    if usr_choice:
+        add["statuses"].append("clientDeleteProhibited")
+
+    usr_choice = input("Add clientUpdateProhibited status? (y/n)").replace("n", "")
+    if usr_choice:
+        add["statuses"].append("clientUpdateProhibited")
+
+    usr_choice = input("Remove clientDeleteProhibited status? (y/n)").replace("n", "")
+    if usr_choice:
+        rem["statuses"].append("clientDeleteProhibited")
+
+    usr_choice = input("Remove clientUpdateProhibited status? (y/n)").replace("n", "")
+    if usr_choice:
+        rem["statuses"].append("clientUpdateProhibited")
 
     response = epp_client.contact_update(contact_id,add,rem,chg)
 
