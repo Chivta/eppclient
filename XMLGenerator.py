@@ -161,7 +161,7 @@ def contact_create(contact_id, name, city, country_code, email, password) -> str
     <command>
         <create>
           <contact:create xmlns:contact="{NAMESPACES["contact"]}">
-            <contact:id>{contact_id}</contact:id>
+            {f"<contact:id>{contact_id}</contact:id>" if contact_id else ""}
             {contact_build_post_info(name,city,country_code)}
             <contact:email>{email}</contact:email>
             <contact:authInfo>
@@ -218,12 +218,14 @@ def host_update(name, add, rem: dict):
      <update>
        <host:update xmlns:host="{NAMESPACES["host"]}">
          <host:name>{name}</host:name>
-         {f"""<host:add>
-           {"\n".join([f'<host:addr ip="{v}">{adr}</host:addr>' for v, adr in add["ip"].items() if adr])}
-         </host:add>""" if add["ip"] else ""}
-         {f"""<host:rem>
-           {"\n".join([f'<host:addr ip="{v}">{adr}</host:addr>' for v, adr in rem["ip"].items() if adr])}
-         </host:rem>""" if rem.get("ip") else ""}
+         <host:add>
+           {"\n".join([f'<host:status s="{stat}"></host:status>' for stat in add.get("statuses") if stat])  if add.get("statuses") else ""}
+           {"\n".join([f'<host:addr ip="{v}">{adr}</host:addr>' for v, adr in add.get("ip").items() if adr]) if add.get("ip") else ""}
+         </host:add>
+         <host:rem>
+           {"\n".join([f'<host:status s="{stat}"></host:status>' for stat in rem.get("statuses") if stat])   if rem.get("statuses") else ""}
+           {"\n".join([f'<host:addr ip="{v}">{adr}</host:addr>' for v, adr in rem.get("ip").items() if adr]) if rem.get("ip") else ""}
+         </host:rem>
        </host:update>
      </update>
    </command>''')
@@ -291,6 +293,12 @@ def contact_update(contact_id, add, rem, chg):
      <update>
        <contact:update xmlns:contact="{NAMESPACES["contact"]}">
          <contact:id>{contact_id}</contact:id>
+         {f"""<contact:add>
+           {'/n'.join(f'<contact:status s="{stat}"></contact:status>' for stat in add.get("statuses")) if add.get("statuses") else ""}
+         </contact:add>""" if len(add) else ""}
+         {f"""<contact:rem>
+           {'/n'.join(f'<contact:status s="{stat}"></contact:status>' for stat in rem.get("statuses")) if rem.get("statuses") else ""}
+         </contact:rem>""" if len(rem) else ""}
          {build_contact_chg(chg.get("name"),chg.get("city"),chg.get("cc"),chg.get("email"),chg.get("password"))}
        </contact:update>
      </update>

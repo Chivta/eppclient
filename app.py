@@ -2,7 +2,7 @@ from ssl import SSLError
 
 from EPPStream import EPPStream
 from config import *
-from general_func import get_exp_date, save_response
+from general_func import get_exp_date
 from response_parsers.domain import *
 from response_parsers.host import *
 from response_parsers.contact import *
@@ -283,14 +283,32 @@ def host_info():
 def host_update():
     print("=== Host Update ===")
     name = input("Enter host name: ")
-    add = {}
-    rem = {}
+    add = {"statuses": []}
+    rem = {"statuses": []}
+
     usr_choice = input("Add ip-addresses to host? (y/n)").replace("n", "")
     if usr_choice:
         add["ip"] = get_ip()
+    usr_choice = input("Add clientDeleteProhibited status? (y/n)").replace("n", "")
+    if usr_choice:
+        add["statuses"].append("clientDeleteProhibited")
+
+    usr_choice = input("Add clientUpdateProhibited status? (y/n)").replace("n", "")
+    if usr_choice:
+        add["statuses"].append("clientUpdateProhibited")
+
     usr_choice = input("Remove ip-addresses from host? (y/n)").replace("n", "")
     if usr_choice:
         rem["ip"] = get_ip()
+
+    usr_choice = input("Remove clientDeleteProhibited status? (y/n)").replace("n", "")
+    if usr_choice:
+        rem["statuses"].append("clientDeleteProhibited")
+
+    usr_choice = input("Remove clientUpdateProhibited status? (y/n)").replace("n", "")
+    if usr_choice:
+        rem["statuses"].append("clientUpdateProhibited")
+
     response = epp_client.host_update(name, add, rem)
 
     parse_result_element(response)

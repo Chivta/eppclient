@@ -93,3 +93,17 @@ def host_delete_without_host_name() -> str:
         </host:delete>
       </delete>
     </command>''')
+
+def contact_create_without_post_info(contact_id, email, password) -> str:
+    return wrap_in_epp_element(f'''
+    <command>
+        <create>
+          <contact:create xmlns:contact="{NAMESPACES["contact"]}">
+            <contact:id>{contact_id}</contact:id>
+            <contact:email>{email}</contact:email>
+            <contact:authInfo>
+              <contact:pw>{password}</contact:pw>
+            </contact:authInfo>
+          </contact:create>
+        </create>
+    </command>''')

@@ -26,7 +26,7 @@ def try_until_success(create_func, check_success, tries=10, *args, **kwargs):
 def test_with_name(name):
     def decorator(fn):
         def wrapper(self, *args, **kwargs):
-            print(f"Test name: {name}")
+            print(f"▶ Test name: {name} ", end="")
             return fn(self, *args, **kwargs)
 
         return wrapper
@@ -50,16 +50,13 @@ def expect(expected_code: int, expected_reason: str = ""):
                 return False, f'Expected code: {expected_code}, but got: {code}. Expected reason: "{expected_reason}", got: "{reason}". Message: "{msg}"'
 
             except Exception as ex:
-                raise ex
                 return False, f"An error occurred: {ex}"
 
         return wrapper
 
     return decorator
 
-
-
-class Tester:
+class TestContext:
     def __init__(self, login: str, password: str, certfile: str, keyfile: str, permanent_contacts: list,
                  permanent_hosts: list, permanent_domains: list):
         connection = EPPServerConnection(HOST, PORT, certfile, keyfile)
@@ -72,7 +69,7 @@ class Tester:
         self.perm_contacts: list = permanent_contacts
 
         self._check_or_create_domains(permanent_domains)
-        self._perm_domains: list = permanent_domains
+        self.perm_domains: list = permanent_domains
 
         self._check_or_create_hosts(permanent_hosts)
         self.perm_hosts: list = permanent_hosts
@@ -80,6 +77,7 @@ class Tester:
         self.domains_to_delete = []
         self.contacts_to_delete = []
         self.hosts_to_delete = []
+
 
     def _check_or_create_domains(self, domains: list):
         for domain in domains:
@@ -128,6 +126,21 @@ class Tester:
 
         if code != 1500:
             raise RuntimeError(f"Could not logout:  " + message)
+
+
+class Tester:
+    def __init__(self, context: TestContext):
+        self.client = context.client
+
+        self.perm_contacts: list = context.perm_contacts
+
+        self.perm_domains: list = context.perm_domains
+
+        self.perm_hosts: list = context.perm_hosts
+
+        self.domains_to_delete = context.domains_to_delete
+        self.contacts_to_delete = context.contacts_to_delete
+        self.hosts_to_delete = context.hosts_to_delete
 
     def safe_create_contact(self):
         name = self.get_available_contact_name()
