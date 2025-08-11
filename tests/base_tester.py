@@ -87,7 +87,7 @@ class TestContext:
                 response = self.client.domain_create(domain, 1,[],self.perm_contacts[0],[])
                 code, message = get_code_and_message(response)
                 if code != 1000:
-                    raise RuntimeError(f'Could not create host "{domain}"')
+                    raise RuntimeError(f'Could not create domain "{domain}"')
 
     def _check_or_create_hosts(self, hosts: list):
         for host in hosts:
@@ -121,6 +121,7 @@ class TestContext:
         for contact in self.contacts_to_delete:
             self.client.contact_delete(contact)
         self.contacts_to_delete.clear()
+
         response = self.client.logout()
         code, message = get_code_and_message(response)
 
@@ -150,10 +151,6 @@ class Tester:
         return name
 
     def safe_create_host(self, suffix=".epp.ua") -> str:
-        # name = self.get_available_domain_name(suffix)
-        # response = self.client.domain_create(name,1,[],self.perm_contacts[0],[])
-        # if get_code(response) != 1000:
-        #     raise RuntimeError(f'Could not create "{name}" domain')
         name = self.get_available_host_name(suffix)
 
         response = self.client.host_create(name)

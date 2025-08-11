@@ -55,26 +55,26 @@ def get_error_reason(xml_string) -> str:
         # Find the <result> element and get its code
         result = root.find('.//epp:result', namespaces=NAMESPACES)
         if result is None:
-            return None
+            return ""
 
         code_str = result.attrib.get("code")
         if code_str is None or int(code_str) < 2000:
-            return None  # Not an error
+            return ""
 
         # Find <extValue> inside <result>
         ext_value = result.find('epp:extValue', namespaces=NAMESPACES)
         if ext_value is None:
-            return None
+            return ""
 
         # Find <reason> inside <extValue>
         reason = ext_value.find('epp:reason', namespaces=NAMESPACES)
         if reason is not None and reason.text:
             return reason.text.strip()
 
-        return None
+        return ""
 
     except ET.ParseError:
-        return None
+        return ""
 
 
 def validate_code_and_reason(response, expected_code, expected_reason):
@@ -99,7 +99,3 @@ def get_exp_date(xml_string):
 
     except ET.ParseError:
         return None
-
-def domain_exists(domain_info: str) -> bool:
-    root = ET.fromstring(domain_info)
-    return
