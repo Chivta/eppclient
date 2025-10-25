@@ -12,6 +12,7 @@ if PASSWORD == "":
     print("ERR: Password in config.py is empty")
     exit(1)
     
+print("Creating testing context...")
 
 try:
     context = TestContext(LOGIN, PASSWORD, CERTFILE, KEYFILE)
@@ -181,8 +182,13 @@ def run_category_menu(category):
 
 
 def main():
-    run_tests_console()
-    context.cleanup()
+    try:
+        run_tests_console()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print("\nRunning cleanup and exiting...")
+        context.cleanup()
 
 
 if __name__ == "__main__":
