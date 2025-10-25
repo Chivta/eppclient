@@ -1,5 +1,5 @@
 from general_func import get_code
-from tests.base_tester import Tester, test_with_name, expect, generate_random_name
+from tests.base_tester import Tester, test_with_name, expect, generate_random_name, get_available_contact_name, get_available_domain_name, get_available_host_name
 
 
 class ContactTester(Tester):
@@ -29,7 +29,7 @@ class ContactTester(Tester):
     @expect(2303,
             "Object does not exist")
     def info_unexisting_contact(self) -> tuple[bool, str]:
-        contact_id = self.get_available_contact_name()
+        contact_id = get_available_contact_name(self.client)
 
         response = self.client.contact_info(contact_id)
 
@@ -55,7 +55,7 @@ class ContactTester(Tester):
     # @expect(2003,
     #         "Required parameter missing")
     # def create_required_parameter_missing(self) -> tuple[bool, str]:
-    #     contact_id = self.get_available_contact_name()
+    #     contact_id = get_available_contact_name(self.client,)
     #
     #     response = self.client.contact_create("")
     #     self.contacts_to_delete.append(contact_id)
@@ -67,7 +67,7 @@ class ContactTester(Tester):
     @expect(2302,
             "Object exists")
     def create_object_exists(self) -> tuple[bool, str]:
-        response = self.client.contact_create(self.perm_contacts[0])
+        response = self.client.contact_create(self.test_contacts[0])
 
         return response
 
@@ -91,34 +91,32 @@ class ContactTester(Tester):
     @expect(2303,
             "Object does not exist")
     def delete_object_not_exists(self) -> tuple[bool, str]:
-        contact_id = self.get_available_contact_name()
+        contact_id = get_available_contact_name(self.client,)
 
         response = self.client.contact_delete(contact_id)
 
         return response
 
     @test_with_name("Contact delete on contact with status clientDeleteProhibited")
-    @expect(2304,
-            "The operation is prohibited")
+    @expect(2304, "The operation is prohibited")
     def delete_status_prohibits_operation(self) -> tuple[bool, str]:
-        self.client.contact_update(self.perm_contacts[0],{"statuses":["clientDeleteProhibited"]},{},{})
+        self.client.contact_update(self.test_contacts[0],{"statuses":["clientDeleteProhibited"]},{},{})
 
-        response = self.client.contact_delete(self.perm_contacts[0])
-        self.client.contact_update(self.perm_contacts[0],{},{"statuses":["clientDeleteProhibited"]},{})
+        response = self.client.contact_delete(self.test_contacts[0])
+        self.client.contact_update(self.test_contacts[0],{},{"statuses":["clientDeleteProhibited"]},{})
 
         return response
 
     @test_with_name("Contact delete on contact linked to a domain")
-    @expect(2305,
-            "Object association prohibits operation")
+    @expect(2305, "Object association prohibits operation")
     def delete_object_association_prohibits(self) -> tuple[bool, str]:
-        domain_name = self.get_available_domain_name()
+        domain_name = get_available_domain_name(self.client,)
         self.domains_to_delete.append(domain_name)
-        response = self.client.domain_create(domain_name,1,[],self.perm_contacts[0],[])
+        response = self.client.domain_create(domain_name,1,[],self.test_contacts[0],[])
         if get_code(response) != 1000:
             raise RuntimeError("Could not create domain")
 
-        response = self.client.contact_delete(self.perm_contacts[0])
+        response = self.client.contact_delete(self.test_contacts[0])
 
         return response
 
@@ -142,7 +140,7 @@ class ContactTester(Tester):
     @expect(2303,
             "Object does not exist")
     def update_unexisting_contact(self) -> tuple[bool, str]:
-        contact_id = self.get_available_contact_name()
+        contact_id = get_available_contact_name(self.client,)
 
         response = self.client.contact_update(contact_id, {}, {}, {})
 
@@ -152,10 +150,10 @@ class ContactTester(Tester):
     @expect(2304,
             "The operation is prohibited")
     def update_status_prohibits_operation(self) -> tuple[bool, str]:
-        self.client.contact_update(self.perm_contacts[0],{"statuses":["clientUpdateProhibited"]},{},{})
+        self.client.contact_update(self.test_contacts[0],{"statuses":["clientUpdateProhibited"]},{},{})
 
-        response = self.client.contact_update(self.perm_contacts[0], {}, {}, {"name":"123"})
+        response = self.client.contact_update(self.test_contacts[0], {}, {}, {"name":"123"})
 
-        self.client.contact_update(self.perm_contacts[0],{},{"statuses":["clientUpdateProhibited"]},{})
+        self.client.contact_update(self.test_contacts[0],{},{"statuses":["clientUpdateProhibited"]},{})
 
         return response

@@ -109,6 +109,13 @@ class EPPClient:
         return response
 
     def contact_update(self, contact_id: str, add: dict, rem: dict, chg: dict):
+        # allowed key is statuses, allowed values are: 
+        # clientUpdateProhibited
+        # clientDeleteProhibited
+        # clientTransferProhibited
+        # clientRenewProhibited
+        # clientHold
+        
         request = XMLGenerator.contact_update(contact_id,add,rem,chg)
         response = self.stream.exchange_messages(request)
         return response

@@ -1,10 +1,30 @@
 from tests.contact_tester import ContactTester
 from tests.domain_tester import DomainTester
-from config import *
 from tests.host_tester import HostTester
 from tests.base_tester import TestContext
+from ssl import SSLError
+from config import *
 
-context = TestContext(LOGIN, PASSWORD, CERTFILE, KEYFILE, PERMANENT_CONTACTS, PERMANENT_HOSTS, PERMANENT_DOMAINS)
+if LOGIN == "":
+    print("ERR: Login in config.py is empty")
+    exit(1)
+if PASSWORD == "":
+    print("ERR: Password in config.py is empty")
+    exit(1)
+    
+
+try:
+    context = TestContext(LOGIN, PASSWORD, CERTFILE, KEYFILE)
+except FileNotFoundError:
+    print("ERR: Files {CERTFILE} and {KEYFILE} were not found")
+    exit(1)
+except SSLError:
+    print("ERR: Bad cert or key")
+    exit(1)
+except ConnectionError:
+    print("ERR: Connection closed unexpectedly")
+    exit(1)
+
 
 domain_test = DomainTester(context)
 host_test = HostTester(context)

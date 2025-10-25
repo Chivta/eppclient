@@ -1,7 +1,7 @@
 from MalformXMLGenerator import host_info_without_host_name, \
     host_create_without_host_name, host_delete_without_host_name
 from general_func import get_code, save_response
-from tests.base_tester import Tester, test_with_name, expect, generate_random_name
+from tests.base_tester import Tester, test_with_name, expect, generate_random_name, get_available_contact_name, get_available_domain_name, get_available_host_name
 
 
 class HostTester(Tester):
@@ -30,7 +30,7 @@ class HostTester(Tester):
     @test_with_name("Host info of unexisting host")
     @expect(2303, "Object does not exist")
     def info_unexisting_host(self) -> tuple[bool, str]:
-        host_name = self.get_available_host_name()
+        host_name = get_available_host_name(self.client)
         response = self.client.host_info(host_name)
 
         return response
@@ -54,9 +54,9 @@ class HostTester(Tester):
     @expect(2003,
             "IP not found")
     def create_no_ip(self) -> tuple[bool, str]:
-        domain_name = self.get_available_domain_name()
+        domain_name = get_available_domain_name(self.client,)
 
-        response = self.client.domain_create(domain_name,1,[],self.perm_contacts[0],[])
+        response = self.client.domain_create(domain_name,1,[],self.test_contacts[0],[])
         self.domains_to_delete.append(domain_name)
 
         if get_code(response) != 1000:
@@ -70,9 +70,9 @@ class HostTester(Tester):
     @expect(2004,
             "Incorrect IP")
     def create_incorrect_ip(self) -> tuple[bool, str]:
-        domain_name = self.get_available_domain_name()
+        domain_name = get_available_domain_name(self.client,)
 
-        response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0], [])
+        response = self.client.domain_create(domain_name, 1, [], self.test_contacts[0], [])
         self.domains_to_delete.append(domain_name)
 
         if get_code(response) != 1000:
@@ -86,9 +86,9 @@ class HostTester(Tester):
     @expect(2302,
             "Object exists")
     def create_existing_host(self) -> tuple[bool, str]:
-        domain_name = self.get_available_domain_name()
+        domain_name = get_available_domain_name(self.client,)
 
-        response = self.client.domain_create(domain_name, 1, [], self.perm_contacts[0], [])
+        response = self.client.domain_create(domain_name, 1, [], self.test_contacts[0], [])
         self.domains_to_delete.append(domain_name)
 
         if get_code(response) != 1000:
@@ -108,7 +108,7 @@ class HostTester(Tester):
     @expect(2303,
             "Parent domain not exists")
     def create_no_parent_domain(self) -> tuple[bool, str]:
-        host_name = self.get_available_host_name()
+        host_name = get_available_host_name(self.client,)
 
         response = self.client.host_create(host_name, "1.1.1.1")
 
@@ -119,7 +119,7 @@ class HostTester(Tester):
     @expect(2306,
             "There are no data about server found")
     def create_bad_external_host(self) -> tuple[bool, str]:
-        host_name = self.get_available_host_name(".com")
+        host_name = get_available_host_name(self.client,".com")
 
         response = self.client.host_create(host_name, "1.1.1.1")
 
@@ -146,13 +146,14 @@ class HostTester(Tester):
     @expect(2304,
             "The operation is prohibited")
     def delete_status_prohibits_operation(self) -> tuple[bool, str]:
-        response = self.client.host_update(self.perm_hosts[0],{"statuses":["clientDeleteProhibited"]},{})
+        response = self.client.host_update(self.test_hosts[0],{"statuses":["clientDeleteProhibited"]},{})
+        save_response(response)
         if get_code(response) != 1000:
             raise RuntimeError("Could not update host")
 
-        response = self.client.host_delete(self.perm_hosts[0])
+        response = self.client.host_delete(self.test_hosts[0])
 
-        self.client.host_update(self.perm_hosts[0], {}, {"statuses": ["clientDeleteProhibited"]})
+        self.client.host_update(self.test_hosts[0], {}, {"statuses": ["clientDeleteProhibited"]})
 
         return response
 
@@ -160,13 +161,12 @@ class HostTester(Tester):
     @expect(2305,
             "Object association prohibits operation")
     def delete_linked_host(self) -> tuple[bool, str]:
-        domain_name = self.get_available_domain_name()
-        response = self.client.domain_create(domain_name, 1, [self.perm_hosts[0]],self.perm_contacts[0],[])
-        save_response(response)
+        domain_name = get_available_domain_name(self.client,)
+        response = self.client.domain_create(domain_name, 1, [self.test_hosts[0]],self.test_contacts[0],[])
         if get_code(response) != 1000:
             raise RuntimeError(f"Could not create {domain_name} domain")
 
-        response = self.client.host_delete(self.perm_hosts[0])
+        response = self.client.host_delete(self.test_hosts[0])
 
         return response
 
@@ -190,7 +190,7 @@ class HostTester(Tester):
     @expect(2303,
             "Object does not exist")
     def update_unexisting_host(self) -> tuple[bool, str]:
-        host_name = self.get_available_host_name()
+        host_name = get_available_host_name(self.client,)
 
         response = self.client.host_update(host_name, {}, {})
 
@@ -200,10 +200,10 @@ class HostTester(Tester):
     @expect(2304,
             "The operation is prohibited")
     def update_status_prohibits_operation(self) -> tuple[bool, str]:
-        self.client.host_update(self.perm_hosts[0], {"statuses":["clientUpdateProhibited"]}, {})
+        self.client.host_update(self.test_hosts[0], {"statuses":["clientUpdateProhibited"]}, {})
 
-        response = self.client.host_update(self.perm_hosts[0],{"ip":{"v4":"1.1.1.1"}},{})
+        response = self.client.host_update(self.test_hosts[0],{"ip":{"v4":"1.1.1.1"}},{})
 
-        self.client.host_update(self.perm_hosts[0], {}, {"statuses": ["clientUpdateProhibited"]})
+        self.client.host_update(self.test_hosts[0], {}, {"statuses": ["clientUpdateProhibited"]})
 
         return response
